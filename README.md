@@ -2,6 +2,8 @@
 
 适用系统：Windows 10 / 11 64 位。当前适配 Overwolf **0.310.1.1**、AlecaFrame **2.6.94**。
 
+物品词库已按 2026 年 9 月 30 日官方数据更新，包含石晶之花 Prime、闪劫 Prime、寒怨刺、霜冥差及对应部件。战甲名称保留英文。
+
 ## 安装与启动
 
 1. 先正常安装官方 Overwolf 和 AlecaFrame，并打开一次官方 AlecaFrame。
