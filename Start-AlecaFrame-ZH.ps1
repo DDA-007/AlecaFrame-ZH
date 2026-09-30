@@ -758,6 +758,38 @@ function Start-RelicChineseOcrHelper {
     throw "中文遗物 OCR 服务启动失败。"
 }
 
+function Test-AlecaFrameInitializationLog {
+    param([string]$LogPath, [datetime]$StartedAt)
+    if (-not (Test-Path -LiteralPath $LogPath)) { return $false }
+    foreach ($line in (Get-Content -LiteralPath $LogPath -Tail 120 -ErrorAction SilentlyContinue)) {
+        if ($line -notmatch 'Plugin initialization successful!' -or $line.Length -lt 23) { continue }
+        $loggedAt = [datetime]::MinValue
+        if ([datetime]::TryParseExact($line.Substring(0, 23), 'yyyy-MM-dd HH:mm:ss,fff',
+            [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None,
+            [ref]$loggedAt) -and $loggedAt -ge $StartedAt) { return $true }
+    }
+    return $false
+}
+
+function Wait-AlecaFrameInitialization {
+    param([datetime]$StartedAt, [int]$TimeoutSeconds = 90)
+    $backgroundLog = Join-Path $env:LOCALAPPDATA 'Overwolf\Log\Apps\AlecaFrame\BackGround.html.log'
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    Write-Output '正在等待 AlecaFrame 完成数据初始化……'
+    while ((Get-Date) -lt $deadline) {
+        Assert-AlecaFrameIntegrity -StartedAt $StartedAt
+        if (Test-AlecaFrameInitializationLog -LogPath $backgroundLog -StartedAt $StartedAt) {
+            Write-LauncherLog 'AlecaFrame native initialization completed'
+            return
+        }
+        if (-not (Get-Process -Name 'Overwolf' -ErrorAction SilentlyContinue)) {
+            throw 'Overwolf 已退出，AlecaFrame 初始化未完成。'
+        }
+        Start-Sleep -Milliseconds 500
+    }
+    throw "AlecaFrame 数据初始化超时（${TimeoutSeconds} 秒）。中文脚本已加载不代表应用已就绪，请检查 $backgroundLog"
+}
+
 function Get-AlecaFrameRenderer {
     Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
         Where-Object {
@@ -900,6 +932,7 @@ try {
     # First launch uses untouched official files so Overwolf can complete its normal
     # integrity check and initialize AlecaFrame.
     $originalRenderer = Start-AlecaFrameAndWait -TimeoutSeconds 120 -StartedAt $overwolfStartedAt
+    Wait-AlecaFrameInitialization -StartedAt $overwolfStartedAt
     Start-Sleep -Seconds 4
     Assert-AlecaFrameIntegrity -StartedAt $overwolfStartedAt
 
@@ -940,6 +973,7 @@ try {
     }
 
     Write-LauncherLog "Chinese UI loaded successfully"
+    Wait-AlecaFrameInitialization -StartedAt $patchTime
     if ($TestValidationReportOnly) {
         Write-Output "SESSION_READY: translation load marker found; 45 seconds for visual inspection, then automatic exit and restore."
         Start-Sleep -Seconds 45

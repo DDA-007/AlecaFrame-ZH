@@ -59,6 +59,10 @@
 
   function installBridge() {
     if (bridgeInstalled) return true;
+    // Native methods exist before Initialize finishes. Installing hooks or
+    // querying native events during that phase can stall application startup.
+    if (window.ready !== true || window.initializationSuccessful !== true ||
+        window.initializingInProgress !== false) return false;
 
     const originalPlugin = window.plugin;
     const media = window.overwolf && window.overwolf.media;

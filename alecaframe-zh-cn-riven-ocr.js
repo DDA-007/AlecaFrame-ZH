@@ -555,6 +555,10 @@
 
   function install() {
     if (installed) return true;
+    // Share the official background readiness gate with the relic bridge.
+    // No game polling or screenshots should run during native initialization.
+    if (window.ready !== true || window.initializationSuccessful !== true ||
+        window.initializingInProgress !== false) return false;
     const media = window.overwolf && window.overwolf.media;
     const games = window.overwolf && window.overwolf.games;
     if (!media || typeof media.takeScreenshot !== "function" || !games ||
