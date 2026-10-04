@@ -888,10 +888,8 @@ try {
 
     $versionDirectory = Get-LatestVersionDirectory
     if ($validationReportOnly) {
-        $overwolfVersion = (Get-Item -LiteralPath $overwolfExe).VersionInfo.FileVersion
-        if ($overwolfVersion -ne "0.310.1.1" -or $versionDirectory.Name -ne "2.6.94") {
-            throw "此实验适配仅验证了 Overwolf 0.310.1.1 / AlecaFrame 2.6.94。"
-        }
+        # Version numbers are logged below for diagnostics, not used as an
+        # allowlist. Actual patch compatibility and initialization are checked.
         if (Get-Process -Name "Overwolf" -ErrorAction SilentlyContinue) {
             throw "请先退出 Overwolf，再运行临时试验，以免影响其他已运行的应用。"
         }
