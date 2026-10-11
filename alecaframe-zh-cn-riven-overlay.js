@@ -216,7 +216,7 @@
     if (/^(?:状态|触发)伤害/.test(value)) return "状态伤害";
     if (/^重击(?:蓄力|预备|准备|起手)(?:速度|时间)/.test(value)) return "重击蓄力速度";
     if (/^(?:格挡|招架)角度/.test(value)) return "格挡角度";
-    if (/^(?:下砸|猛击)(?:攻击)?伤害/.test(value)) return "下砸伤害";
+    if (/^(?:下砸|猛击|震地)(?:攻击)?伤害/.test(value)) return "下砸伤害";
     if (/^(?:重击|重攻击|重击攻击)伤害/.test(value)) return "重击伤害";
     if (/^(?:毒氣|毒气)伤害/.test(value)) return "毒气伤害";
     if (/^腐蚀伤害/.test(value)) return "腐蚀伤害";
@@ -521,7 +521,7 @@
     "重击伤害": "Heavy Attack Damage",
     "重击蓄力速度": "Heavy Attack Windup Speed",
     "格挡角度": "Parry Angle",
-    "下砸伤害": "Slam Damage",
+    "震地伤害": "Slam Damage",
     "毒气伤害": "Gas Damage",
     "腐蚀伤害": "Corrosive Damage",
     "病毒伤害": "Viral Damage",
@@ -559,7 +559,7 @@
     if (/^(?:状态|触发)伤害/.test(value)) return "状态伤害";
     if (/^重击(?:蓄力|预备|准备|起手)(?:速度|时间)/.test(value)) return "重击蓄力速度";
     if (/^(?:格挡|招架)角度/.test(value)) return "格挡角度";
-    if (/^(?:下砸|猛击)(?:攻击)?伤害/.test(value)) return "下砸伤害";
+    if (/^(?:下砸|猛击|震地)(?:攻击)?伤害/.test(value)) return "震地伤害";
     if (/^(?:重击|重攻击|重击攻击)伤害/.test(value)) return "重击伤害";
     if (/^(?:毒氣|毒气)伤害/.test(value)) return "毒气伤害";
     if (/^腐蚀伤害/.test(value)) return "腐蚀伤害";
