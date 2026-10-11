@@ -236,43 +236,87 @@
     ["Crit % on slide", "滑行攻击暴击几率"],
     ["Heavy attack eff.", "重击效率"],
     ["Heavy Attack Critical Chance", "重击暴击几率"],
-    ["Heavy Attack Damage", "重击伤害"],
-    ["Heavy Attack Wind Up Speed", "重击蓄力速度"],
+    ["Heavy Attack Damage", "在重击时的近战伤害"],
+    ["Melee Damage on Heavy Attack", "在重击时的近战伤害"],
+    ["Melee Damage during Heavy Attack", "在重击时的近战伤害"],
+    ["Melee Damage when Heavy Attacking", "在重击时的近战伤害"],
+    ["Heavy Attack Wind Up Speed", "重击准备速度"],
+    ["Heavy Attack Windup Speed", "重击准备速度"],
+    ["Heavy Attack Wind-Up Speed", "重击准备速度"],
     ["Critical Chance for Slide Attack", "滑行攻击暴击几率"],
     ["Additional Combo Count Chance", "额外连击数几率"],
-    ["Status Effect Duration", "状态持续时间"],
-    ["Status Duration", "状态持续时间"],
+    ["Weakpoint Critical Chance", "弱点暴击几率"],
+    ["Weak Point Critical Chance", "弱点暴击几率"],
+    ["Critical Chance on Weakpoint", "弱点暴击几率"],
+    ["Weakpoint Damage", "弱点伤害"],
+    ["Weak Point Damage", "弱点伤害"],
+    ["Magazine Reload While Holstered", "收起武器时弹匣每秒自动装填"],
+    ["Magazine Reload When Holstered", "收起武器时弹匣每秒自动装填"],
+    ["Ammo Efficiency", "弹药效率"],
+    ["Status Effect Duration", "触发时间"],
+    ["Status Duration", "触发时间"],
+    ["Status Damage", "异常状态伤害"],
     ["Heavy Attack Efficiency", "重击效率"],
     ["Combo Duration", "连击持续时间"],
-    ["Projectile Flight Speed", "射弹飞行速度"],
-    ["Projectile Speed", "射弹速度"],
-    ["Ammo Maximum", "最大弹药量"],
+    ["Projectile Flight Speed", "投射物速度"],
+    ["Projectile Speed", "投射物速度"],
+    ["Ammo Maximum", "弹药最大值"],
+    ["Maximum Ammo", "弹药最大值"],
+    ["Max Ammo", "弹药最大值"],
     ["Magazine Capacity", "弹匣容量"],
     ["Magazine Size", "弹匣容量"],
-    ["Maximum Ammo", "最大弹药量"],
-    ["Max Ammo", "最大弹药量"],
-    ["Damage to Infested", "对感染者伤害"],
-    ["Damage to Corpus", "对 Corpus 伤害"],
-    ["Damage to Grineer", "对 Grineer 伤害"],
-    ["Damage to Corrupted", "对堕落者伤害"],
+    ["Damage vs. Corpus", "对 Corpus 的伤害"],
+    ["Damage vs Corpus", "对 Corpus 的伤害"],
+    ["Damage to Corpus", "对 Corpus 的伤害"],
+    ["Damage vs. Grineer", "对 Grineer 的伤害"],
+    ["Damage vs Grineer", "对 Grineer 的伤害"],
+    ["Damage to Grineer", "对 Grineer 的伤害"],
+    ["Damage vs. Infested", "对 Infested 的伤害"],
+    ["Damage vs Infested", "对 Infested 的伤害"],
+    ["Damage to Infested", "对 Infested 的伤害"],
+    ["Damage vs. Orokin", "对奥罗金的伤害"],
+    ["Damage vs Orokin", "对奥罗金的伤害"],
+    ["Damage to Orokin", "对奥罗金的伤害"],
+    ["Damage vs. Scaldra", "对炽蛇军的伤害"],
+    ["Damage vs Scaldra", "对炽蛇军的伤害"],
+    ["Damage to Scaldra", "对炽蛇军的伤害"],
+    ["Damage vs. Techrot", "对科腐者的伤害"],
+    ["Damage vs Techrot", "对科腐者的伤害"],
+    ["Damage to Techrot", "对科腐者的伤害"],
     ["Critical Damage", "暴击伤害"],
-    ["Critical Chance", "暴击几率"],
+    ["Critical Chance", "暴击率"],
     ["Crit. damage", "暴击伤害"],
-    ["Crit. chance", "暴击几率"],
+    ["Crit. chance", "暴击率"],
+    ["Blast Damage", "爆炸伤害"],
+    ["Cold Damage", "冰冻伤害"],
+    ["Viral Damage", "病毒伤害"],
+    ["Impact Damage", "冲击伤害"],
+    ["Puncture Damage", "穿刺伤害"],
+    ["Magnetic Damage", "磁力伤害"],
+    ["Electricity Damage", "电击伤害"],
+    ["Gas Damage", "毒气伤害"],
+    ["Toxin Damage", "毒素伤害"],
+    ["Radiation Damage", "辐射伤害"],
+    ["Corrosive Damage", "腐蚀伤害"],
+    ["Heat Damage", "火焰伤害"],
+    ["Slash Damage", "切割伤害"],
+    ["Fire Rate / Attack Speed", "射速/攻击速度"],
+    ["Fire Rate/Attack Speed", "射速/攻击速度"],
+    ["Attack Speed", "攻击速度"],
     ["Status Chance", "触发几率"],
     ["Status chance", "触发几率"],
     ["Magazine size", "弹匣容量"],
-    ["Max ammo", "最大弹药量"],
+    ["Max ammo", "弹药最大值"],
     ["Finisher Damage", "处决伤害"],
     ["Melee Damage", "近战伤害"],
     ["Melee damage", "近战伤害"],
+    ["Initial Combo", "初始连击"],
+    ["Parry Angle", "招架角度"],
     ["Heavy Attack", "重击"],
     ["Heavy attack", "重击"],
     ["Slide Attack", "滑行攻击"],
     ["Slide attack", "滑行攻击"],
     ["Combo Count Chance", "连击数几率"],
-    ["Initial Combo", "初始连击数"],
-    ["Attack Speed", "攻击速度"],
     ["Reload Speed", "装填速度"],
     ["Reload speed", "装填速度"],
     ["Fire Rate", "射速"],
@@ -280,7 +324,8 @@
     ["Multishot", "多重射击"],
     ["Punch Through", "穿透"],
     ["Punch through", "穿透"],
-    ["Recoil", "后坐力"],
+    ["Weapon Recoil", "武器后坐力"],
+    ["Recoil", "武器后坐力"],
     ["Electricity", "电击"],
     ["Puncture", "穿刺"],
     ["Impact", "冲击"],
@@ -290,8 +335,8 @@
     ["Heat", "火焰"],
     ["Fire", "火焰"],
     ["Damage", "伤害"],
-    ["Range", "范围"],
-    ["Zoom", "瞄准倍率"]
+    ["Range", "攻击范围"],
+    ["Zoom", "变焦"]
   ];
 
   function isMarketPanelElement(element) {
@@ -1145,9 +1190,9 @@
         return;
       }
       if (isDisplayOnlyItemName(parent) || /^(SCRIPT|STYLE|NOSCRIPT|CODE|PRE|TEXTAREA)$/i.test(parent.tagName)) return;
+      translateRivenTraitNode(root);
       const translated = translateString(root.nodeValue);
       if (translated !== root.nodeValue) root.nodeValue = translated;
-      translateRivenTraitNode(root);
       translateRivenChallengeNode(root);
       return;
     }
@@ -1164,9 +1209,9 @@
       if (node.nodeType === Node.TEXT_NODE) {
         const parent = node.parentElement;
         if (!parent || isMarketPanelElement(parent) || isDisplayOnlyItemName(parent) || /^(SCRIPT|STYLE|NOSCRIPT|CODE|PRE|TEXTAREA)$/i.test(parent.tagName)) continue;
+        translateRivenTraitNode(node);
         const translated = translateString(node.nodeValue);
         if (translated !== node.nodeValue) node.nodeValue = translated;
-        translateRivenTraitNode(node);
         translateRivenChallengeNode(node);
       } else {
         translateElement(node);
