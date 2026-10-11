@@ -988,9 +988,9 @@ function parseRivenCardLines(lines, titleLine = null, cardIndex = 0) {
       });
       continue;
     }
-    // Chinese faction damage uses `x1.55 对 Grineer 的伤害` rather than a
-    // percentage. Preserve it as a real positive riven stat.
-    const multiplierTrait = text.match(/^x\s*(\d+(?:\.\d+)?)\s*(对\s*(?:Grineer|Corpus|Infested)\s*的?伤害)$/i);
+    // Faction damage uses `x1.55 对 Grineer 的伤害` rather than a percentage.
+    // Preserve the newly spliced Orokin, Techrot, and Scaldra variants too.
+    const multiplierTrait = text.match(/^x\s*(\d+(?:\.\d+)?)\s*(对\s*(?:Grineer|Corpus|Infested|Orokin|Techrot|Scaldra|奥罗金|科腐者|科技细胞|科技腐化体|斯卡尔德拉|斯卡尔德|斯卡尔达)\s*的?伤害)$/i);
     if (multiplierTrait) {
       traits.push({
         sign: "+", value: Number(multiplierTrait[1]), unit: "x",

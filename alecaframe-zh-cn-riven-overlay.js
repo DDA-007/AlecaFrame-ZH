@@ -70,10 +70,8 @@
     "近战触发几率": "WeaponMeleeStatusChanceSPMod",
     "近战触发": "WeaponMeleeStatusChanceSPMod",
     "爆头暴击几率": "WeaponWeakpointCriticalChanceMod",
-    "弱点暴击几率": "WeaponWeakpointCriticalChanceMod",
     "处决伤害": "WeaponMeleeStealthLethalMod",
     "终结伤害": "WeaponMeleeStealthLethalMod",
-    "重击伤害": "WeaponMeleeSlamDamageMod",
     "下砸伤害": "WeaponMeleeSlamDamageMod",
     "光束距离": "WeaponBeamDistanceRifleMod",
     "射线距离": "WeaponBeamDistanceRifleMod",
@@ -211,6 +209,21 @@
 
   function canonicalNativeTraitName(text) {
     const value = String(text || "").replace(/\s+/g, "");
+    if (/^(?:弹药效率|弹药使用效率)/.test(value)) return "弹药效率";
+    if (/^(?:(?:收起(?:武器)?时|枪套(?:时)?|枪入套(?:时)?|(?:弹匣)?收起时)(?:弹匣)?(?:自动)?(?:装填|填装)(?:弹匣)?(?:速度)?|(?:弹匣)?(?:自动)?(?:装填|填装)(?:弹匣)?(?:速度)?(?:收起(?:武器)?时|枪套(?:时)?))/.test(value)) return "收起时装填弹匣";
+    if (/^(?:弱点|弱点部位|弱点攻击)伤害/.test(value)) return "弱点伤害";
+    if (/^弱点暴击(?:几率)?/.test(value)) return "弱点暴击几率";
+    if (/^(?:状态|触发)伤害/.test(value)) return "状态伤害";
+    if (/^重击(?:蓄力|预备|准备|起手)(?:速度|时间)/.test(value)) return "重击蓄力速度";
+    if (/^(?:格挡|招架)角度/.test(value)) return "格挡角度";
+    if (/^(?:下砸|猛击)(?:攻击)?伤害/.test(value)) return "下砸伤害";
+    if (/^(?:重击|重攻击|重击攻击)伤害/.test(value)) return "重击伤害";
+    if (/^(?:毒氣|毒气)伤害/.test(value)) return "毒气伤害";
+    if (/^腐蚀伤害/.test(value)) return "腐蚀伤害";
+    if (/^病毒伤害/.test(value)) return "病毒伤害";
+    if (/^辐射伤害/.test(value)) return "辐射伤害";
+    if (/^爆炸伤害/.test(value)) return "爆炸伤害";
+    if (/^磁力伤害/.test(value)) return "磁力伤害";
     if (/^弹(?:匣(?:容|容量)?|厘|便容量?)/.test(value)) return "弹匣容量";
     if (/^多重/.test(value)) return "多重射击";
     if (/^穿透$/.test(value)) return "穿透";
@@ -232,16 +245,66 @@
     if (/^滑行暴击(?:几率)?/.test(value)) return "滑行暴击几率";
     if (/^重击效率/.test(value)) return "重击效率";
     if (/^近战触发(?:几率)?/.test(value)) return "近战触发几率";
-    if (/^(?:爆头|弱点)暴击(?:几率)?/.test(value)) return "爆头暴击几率";
+    if (/^(?:爆头|头部)暴击(?:几率)?/.test(value)) return "爆头暴击几率";
     if (/^(?:处决|终结)伤害/.test(value)) return "处决伤害";
-    if (/^(?:重击|下砸)伤害/.test(value)) return "重击伤害";
     if (/^(?:光束|射线)距离/.test(value)) return "光束距离";
     if (/^自伤减免/.test(value)) return "自伤减免";
     if (/^(?:武器)?后坐力/.test(value)) return "武器后坐力";
     if (/^对Grineer(?:的)?伤害/i.test(value)) return "对Grineer伤害";
     if (/^对Corpus(?:的)?伤害/i.test(value)) return "对Corpus伤害";
     if (/^对Infested(?:的)?伤害/i.test(value)) return "对Infested伤害";
+    if (/^对(?:Orokin|奥罗金)(?:的)?伤害/i.test(value)) return "对Orokin伤害";
+    if (/^对(?:Techrot|科腐者|科技细胞|科技腐化体)(?:的)?伤害/i.test(value)) return "对Techrot伤害";
+    if (/^对(?:Scaldra|斯卡尔德拉|斯卡尔德|斯卡尔达)(?:的)?伤害/i.test(value)) return "对Scaldra伤害";
     return value;
+  }
+
+  function normalizeEnglishTraitName(text) {
+    return String(text || "").replace(/<[^>]*>/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+
+  const nativeTraitEnglishAliases = {
+    "弱点伤害": ["Weakpoint Damage", "Weak Point Damage"],
+    "弱点暴击几率": ["Weakpoint Critical Chance", "Weak Point Critical Chance"],
+    "弹药效率": ["Ammo Efficiency"],
+    "收起时装填弹匣": ["Magazine Reload While Holstered", "Magazine Reload When Holstered"],
+    "状态伤害": ["Status Damage"],
+    "重击伤害": ["Heavy Attack Damage"],
+    "重击蓄力速度": ["Heavy Attack Windup Speed", "Heavy Attack Wind-Up Speed"],
+    "格挡角度": ["Parry Angle"],
+    "下砸伤害": ["Slam Damage", "Slam Attack Damage"],
+    "毒气伤害": ["Gas Damage"],
+    "腐蚀伤害": ["Corrosive Damage"],
+    "病毒伤害": ["Viral Damage"],
+    "辐射伤害": ["Radiation Damage"],
+    "爆炸伤害": ["Blast Damage"],
+    "磁力伤害": ["Magnetic Damage"],
+    "对Orokin伤害": ["Damage vs Orokin", "Damage to Orokin"],
+    "对Techrot伤害": ["Damage vs Techrot", "Damage to Techrot"],
+    "对Scaldra伤害": ["Damage vs Scaldra", "Damage to Scaldra"]
+  };
+
+  function nativeTraitAttr(traitName, nativeAttrs) {
+    if (!Array.isArray(nativeAttrs)) return null;
+    const canonical = canonicalNativeTraitName(traitName);
+    const staticId = nativeTraitIds[canonical];
+    if (staticId) {
+      const staticMatch = nativeAttrs.find(function (attr) { return attr && attr.internalName === staticId; });
+      if (staticMatch) return staticMatch;
+    }
+    const displayName = rivenTraitNames[canonical];
+    const names = (nativeTraitEnglishAliases[canonical] || []).concat(displayName ? [displayName] : []);
+    const wanted = new Set(names.map(normalizeEnglishTraitName).filter(Boolean));
+    if (!wanted.size) return null;
+    return nativeAttrs.find(function (attr) {
+      return attr && wanted.has(normalizeEnglishTraitName(attr.name));
+    }) || null;
+  }
+
+  function nativeTraitId(traitName, nativeAttrs) {
+    const attr = nativeTraitAttr(traitName, nativeAttrs);
+    if (attr && attr.internalName) return String(attr.internalName);
+    return nativeTraitIds[canonicalNativeTraitName(traitName)] || "";
   }
 
   function buildNativeFinderAttrs(cards, nativeAttrs) {
@@ -250,7 +313,7 @@
     (cards || []).forEach(function (card) {
       (card && card.traits || []).forEach(function (trait) {
         if (!trait || (trait.sign !== "+" && trait.sign !== "-")) return;
-        const traitId = nativeTraitIds[canonicalNativeTraitName(trait.text)];
+        const traitId = nativeTraitId(trait.text, nativeAttrs);
         if (!traitId || !allowed.has(traitId)) return;
         observed.push({ positive: trait.sign === "+", selectedAttrUID: traitId, required: false });
       });
@@ -450,6 +513,24 @@
     "寒冷伤害": "Cold",
     "冰冻伤害": "Cold",
     "电击伤害": "Electricity",
+    "弱点伤害": "Weakpoint Damage",
+    "弱点暴击几率": "Weakpoint Critical Chance",
+    "弹药效率": "Ammo Efficiency",
+    "收起时装填弹匣": "Magazine Reload While Holstered",
+    "状态伤害": "Status Damage",
+    "重击伤害": "Heavy Attack Damage",
+    "重击蓄力速度": "Heavy Attack Windup Speed",
+    "格挡角度": "Parry Angle",
+    "下砸伤害": "Slam Damage",
+    "毒气伤害": "Gas Damage",
+    "腐蚀伤害": "Corrosive Damage",
+    "病毒伤害": "Viral Damage",
+    "辐射伤害": "Radiation Damage",
+    "爆炸伤害": "Blast Damage",
+    "磁力伤害": "Magnetic Damage",
+    "对Orokin伤害": "Damage vs Orokin",
+    "对Techrot伤害": "Damage vs Techrot",
+    "对Scaldra伤害": "Damage vs Scaldra",
     "最大弹药量": "Maximum Ammo",
     "弹药上限": "Maximum Ammo",
     "瞄准倍率": "Zoom",
@@ -461,11 +542,8 @@
     "近战触发几率": "Melee Status Chance",
     "近战触发": "Melee Status Chance",
     "爆头暴击几率": "Headshot Critical Chance",
-    "弱点暴击几率": "Headshot Critical Chance",
     "处决伤害": "Finisher Damage",
     "终结伤害": "Finisher Damage",
-    "重击伤害": "Slam Attack Damage",
-    "下砸伤害": "Slam Attack Damage",
     "光束距离": "Beam Length",
     "射线距离": "Beam Length",
     "自伤减免": "Self Damage Reduction",
@@ -474,6 +552,21 @@
 
   function canonicalDisplayTraitName(text) {
     const value = String(text || "").replace(/\s+/g, "");
+    if (/^(?:弹药效率|弹药使用效率)/.test(value)) return "弹药效率";
+    if (/^(?:(?:收起(?:武器)?时|枪套(?:时)?|枪入套(?:时)?|(?:弹匣)?收起时)(?:弹匣)?(?:自动)?(?:装填|填装)(?:弹匣)?(?:速度)?|(?:弹匣)?(?:自动)?(?:装填|填装)(?:弹匣)?(?:速度)?(?:收起(?:武器)?时|枪套(?:时)?))/.test(value)) return "收起时装填弹匣";
+    if (/^(?:弱点|弱点部位|弱点攻击)伤害/.test(value)) return "弱点伤害";
+    if (/^弱点暴击(?:几率)?/.test(value)) return "弱点暴击几率";
+    if (/^(?:状态|触发)伤害/.test(value)) return "状态伤害";
+    if (/^重击(?:蓄力|预备|准备|起手)(?:速度|时间)/.test(value)) return "重击蓄力速度";
+    if (/^(?:格挡|招架)角度/.test(value)) return "格挡角度";
+    if (/^(?:下砸|猛击)(?:攻击)?伤害/.test(value)) return "下砸伤害";
+    if (/^(?:重击|重攻击|重击攻击)伤害/.test(value)) return "重击伤害";
+    if (/^(?:毒氣|毒气)伤害/.test(value)) return "毒气伤害";
+    if (/^腐蚀伤害/.test(value)) return "腐蚀伤害";
+    if (/^病毒伤害/.test(value)) return "病毒伤害";
+    if (/^辐射伤害/.test(value)) return "辐射伤害";
+    if (/^爆炸伤害/.test(value)) return "爆炸伤害";
+    if (/^磁力伤害/.test(value)) return "磁力伤害";
     // The dim, unselected card is frequently clipped by Paddle.  These are
     // spelling fragments of the same stat, not distinct traits.
     if (/^弹(?:匣(?:容|容量)?|厘|便容量?)/.test(value)) return "弹匣容量";
@@ -498,11 +591,13 @@
     if (/^滑行暴击(?:几率)?/.test(value)) return "滑行暴击几率";
     if (/^重击效率/.test(value)) return "重击效率";
     if (/^近战触发(?:几率)?/.test(value)) return "近战触发几率";
-    if (/^(?:爆头|弱点)暴击(?:几率)?/.test(value)) return "爆头暴击几率";
+    if (/^(?:爆头|头部)暴击(?:几率)?/.test(value)) return "爆头暴击几率";
     if (/^(?:处决|终结)伤害/.test(value)) return "处决伤害";
-    if (/^(?:重击|下砸)伤害/.test(value)) return "重击伤害";
     if (/^(?:光束|射线)距离/.test(value)) return "光束距离";
     if (/^自伤减免/.test(value)) return "自伤减免";
+    if (/^对(?:Orokin|奥罗金)(?:的)?伤害/i.test(value)) return "对Orokin伤害";
+    if (/^对(?:Techrot|科腐者|科技细胞|科技腐化体)(?:的)?伤害/i.test(value)) return "对Techrot伤害";
+    if (/^对(?:Scaldra|斯卡尔德拉|斯卡尔德|斯卡尔达)(?:的)?伤害/i.test(value)) return "对Scaldra伤害";
     return value;
   }
 
@@ -543,7 +638,8 @@
       /[\u4e00-\u9fff]/.test(trait.text) &&
       typeof trait.value === "number" && Number.isFinite(trait.value) &&
       (trait.sign === "+" || trait.sign === "-") &&
-      !!nativeTraitIds[canonicalNativeTraitName(trait.text)];
+      (!!nativeTraitIds[canonicalNativeTraitName(trait.text)] ||
+        !!rivenTraitNames[canonicalNativeTraitName(trait.text)]);
   }
 
   // This is a direct port of RivenExplorerHelper.GetRivenGradeFromRAWAttrList
@@ -584,7 +680,7 @@
     const positiveIds = [];
     const negativeIds = [];
     (card && card.traits || []).filter(displayableTrait).forEach(function (trait) {
-      const id = nativeTraitIds[canonicalNativeTraitName(trait.text)];
+      const id = nativeTraitId(trait.text, history && history.attrs);
       if (!id) return;
       if (trait.sign === "+") positiveIds.push(id);
       else if (trait.sign === "-") negativeIds.push(id);
@@ -672,8 +768,7 @@
   }
 
   function nativeRangeAttr(trait, attrs) {
-    const id = nativeTraitIds[canonicalNativeTraitName(trait && trait.text)];
-    return id && Array.isArray(attrs) ? attrs.find(function (attr) { return attr && attr.internalName === id; }) : null;
+    return nativeTraitAttr(trait && trait.text, attrs);
   }
 
   function nativeRangeLabel(trait, attrs) {
