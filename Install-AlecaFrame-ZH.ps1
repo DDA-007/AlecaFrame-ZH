@@ -33,17 +33,27 @@ $shortcut.TargetPath = $commandPath
 $shortcut.Arguments = $commandArguments
 $shortcut.WorkingDirectory = $PSScriptRoot
 $shortcut.WindowStyle = 1
-$extensionsRoot = Join-Path $env:LOCALAPPDATA `
-    "Overwolf\Extensions\afmcagbpgggkpdkokjhjkllpegnadmkignlonpjm"
-$latestVersion = Get-ChildItem -LiteralPath $extensionsRoot -Directory `
+$appId = "afmcagbpgggkpdkokjhjkllpegnadmkignlonpjm"
+$iconCandidates = New-Object 'System.Collections.Generic.List[string]'
+$iconCandidates.Add((Join-Path $env:LOCALAPPDATA "Overwolf\AppShortcutIcons\$appId.ico"))
+$extensionsRoot = Join-Path $env:LOCALAPPDATA "Overwolf\Extensions\$appId"
+$installedVersions = Get-ChildItem -LiteralPath $extensionsRoot -Directory `
     -ErrorAction SilentlyContinue |
-    Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName "manifest.json") } |
-    Sort-Object { [version]$_.Name } -Descending |
-    Select-Object -First 1
-$icon = if ($latestVersion) { Join-Path $latestVersion.FullName "icon.ico" } else { "" }
-if ($icon -and (Test-Path -LiteralPath $icon)) {
-    $shortcut.IconLocation = "$icon,0"
+    Where-Object { $_.Name -match '^\d+(\.\d+)+$' -and (Test-Path -LiteralPath (Join-Path $_.FullName "manifest.json")) } |
+    Sort-Object { [version]$_.Name } -Descending
+foreach ($installedVersion in $installedVersions) {
+    $iconCandidates.Add((Join-Path $installedVersion.FullName "icon.ico"))
 }
+# Keep the shortcut icon after Overwolf removes an old extension version.
+$iconDirectory = Join-Path $env:LOCALAPPDATA "AlecaFrame-ZH-Patch\ShortcutIcons"
+$icon = Join-Path $iconDirectory "AlecaFrame-ZH.ico"
+$iconSource = $iconCandidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+if ($iconSource) {
+    New-Item -ItemType Directory -Path $iconDirectory -Force | Out-Null
+    Copy-Item -LiteralPath $iconSource -Destination $icon -Force
+}
+$iconLocation = if (Test-Path -LiteralPath $icon -PathType Leaf) { "$icon,0" } else { "$commandPath,0" }
+$shortcut.IconLocation = $iconLocation
 $shortcut.Description = "启动 AlecaFrame 中文会话，退出 Overwolf 后恢复官方文件"
 $shortcut.Save()
 
@@ -52,7 +62,7 @@ if (-not (Test-Path -LiteralPath $shortcutPath)) {
 }
 $saved = $shell.CreateShortcut($shortcutPath)
 if ($saved.TargetPath -ne $commandPath -or $saved.Arguments -ne $commandArguments -or
-    $saved.WorkingDirectory -ne $PSScriptRoot) {
+    $saved.WorkingDirectory -ne $PSScriptRoot -or $saved.IconLocation -ne $iconLocation) {
     throw "快捷方式验证失败，请重新运行 Install.cmd：$shortcutPath"
 }
 Write-Host ""
