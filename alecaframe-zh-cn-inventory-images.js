@@ -34,7 +34,7 @@
       const englishName = label?.textContent?.trim();
       const item = app.items.find((candidate) => candidate?.name === englishName);
       if ((item?.type !== 'mod' && item?.type !== 'arcane') || !imageNames[item.name]) return;
-      const image = card.querySelector('.inventoryLeftPart > .inventoryItemImage');
+      const image = card.querySelector('.inventoryCardArtwork > .inventoryItemImage, .inventoryLeftPart > .inventoryItemImage');
       if (!image) return;
       const fallbackUrl = imageBaseUrl + encodeURIComponent(imageNames[item.name]);
       if (item.picture !== fallbackUrl) {

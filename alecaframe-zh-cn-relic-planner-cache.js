@@ -15,6 +15,7 @@
   let latestTraceCount = "-";
   let listenerInstalled = false;
   let refreshWrapped = false;
+  let appRefreshWrapped = false;
 
   function audit(event, detail) {
     fetch("http://127.0.0.1:38147/audit", {
@@ -78,25 +79,28 @@
       }
     }
 
-    if (!refreshWrapped && typeof window.RefreshRelicPlanner === "function") {
-      const originalRefresh = window.RefreshRelicPlanner;
-      if (originalRefresh.__alecaframeZhCnPlannerWrapper) {
-        refreshWrapped = true;
-      } else {
-        function wrappedRefreshRelicPlanner(forceUpdate, shouldShowAll) {
-          if (forceUpdate === true && !plannerStarted) {
-            planRequestPending = true;
-            audit("RELIC_PLANNER_START_REQUESTED", "force-update");
-          }
-          return originalRefresh.apply(this, arguments);
+    function wrapRefresh(target, method) {
+      const originalRefresh = target && target[method];
+      if (typeof originalRefresh !== "function") return false;
+      if (originalRefresh.__alecaframeZhCnPlannerWrapper) return true;
+      function wrappedRefreshRelicPlanner(forceUpdate, shouldShowAll) {
+        if (forceUpdate === true && !plannerStarted && !planRequestPending) {
+          planRequestPending = true;
+          audit("RELIC_PLANNER_START_REQUESTED", "force-update");
         }
-        wrappedRefreshRelicPlanner.__alecaframeZhCnPlannerWrapper = true;
-        window.RefreshRelicPlanner = wrappedRefreshRelicPlanner;
-        refreshWrapped = true;
+        return originalRefresh.apply(this, arguments);
       }
+      wrappedRefreshRelicPlanner.__alecaframeZhCnPlannerWrapper = true;
+      target[method] = wrappedRefreshRelicPlanner;
+      return true;
     }
 
-    return listenerInstalled && refreshWrapped;
+    if (!refreshWrapped) refreshWrapped = wrapRefresh(window, "RefreshRelicPlanner");
+    // 3.x templates call the mounted app directly; older pages call the global
+    // entry point. Wrap both while keeping one request marker for nested calls.
+    if (!appRefreshWrapped) appRefreshWrapped = wrapRefresh(window.relicPlannerApp, "refresh");
+
+    return listenerInstalled && !!window.relicPlannerApp && (refreshWrapped || appRefreshWrapped);
   }
 
   const timer = setInterval(() => {

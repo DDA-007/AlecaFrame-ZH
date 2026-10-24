@@ -180,7 +180,1143 @@
     "With increased magazine size, the Coda Bubonico was born of the Technocyte virus' need to spread infection. Primary Fire rate ramps up with continuous fire.": "终幕·横痃重炮诞生于科技细胞病毒传播感染的需求，拥有更大的弹匣容量。主射击会随持续射击逐渐提高射速。"
   });
 
+  // AlecaFrame 3.0 UI labels. Keep runtime identifiers and original item data intact.
+  Object.assign(translations, {
+    "Live Arbitration": "实时仲裁",
+    "Live Arbitrations": "实时仲裁",
+    "Zoom out": "缩小",
+    "Zoom in": "放大",
+    "Minimize": "最小化",
+    "Maximize": "最大化",
+    "Toggle maximize": "切换最大化",
+    "Close live Arbitration": "关闭实时仲裁",
+    "Close AlecaFrame": "关闭 AlecaFrame",
+    "Arbitration": "仲裁",
+    "Retrying automatically": "正在自动重试",
+    "Run summary": "本次任务摘要",
+    "Expected Vitus Essence": "预期生息精华",
+    "Gameplay time, excluding preparation and ending at extraction when observed": "实际任务时间，不含准备阶段；若检测到撤离，则以撤离时间为终点",
+    "Mission time": "任务时间",
+    "Observed drone spawns, not kills or Vitus drops": "观测到的无人机生成数，并非击杀数或生息精华掉落数",
+    "Drones spawned": "无人机生成数",
+    "Average drone spawns per minute of gameplay, including intermissions and excluding preparation and the extraction tail": "每分钟任务时间内的平均无人机生成数，包含波次间隔，不含准备和撤离后的时间",
+    "Closing in": "即将关闭",
+    "Close now": "立即关闭",
+    "Time since the wave ended": "此波结束后的时间",
+    "Gameplay time, including intermissions": "实际任务时间，包含波次间隔",
+    "Expected VE": "预期生息精华",
+    "Drone spawn rate": "无人机生成速率",
+    "Recent uses a 90-second rolling average; All time uses a 5-minute rolling average. The start of the run uses the elapsed portion of each window.": "近期数据采用 90 秒滚动平均，全程数据采用 5 分钟滚动平均。任务刚开始时使用各时间窗口内已经过的时段。",
+    "90 s recent, 5 min all time": "近期 90 秒，全程 5 分钟",
+    "Wave recap": "波次回顾",
+    "Follow run": "跟随当前任务",
+    "Last 1 minute": "最近 1 分钟",
+    "Last 5 minutes": "最近 5 分钟",
+    "Last 10 minutes": "最近 10 分钟",
+    "All time": "全程",
+    "spawns/min": "生成数/分钟",
+    "Intermission": "波次间隔",
+    "Dismiss recap, Escape": "关闭回顾，按 Esc",
+    "Drone spawns per minute of active wave time. Compared with the duration-weighted rate of earlier completed waves, excluding intermissions.": "每分钟有效波次时间内的无人机生成数，与先前已完成波次按时长加权的速率比较，不含波次间隔。",
+    "drones / min": "无人机/分钟",
+    "This wave": "当前波次",
+    "Run average": "任务平均",
+    "Unique drone spawns observed during this wave. The log does not confirm individual drone kills.": "此波观测到的不重复无人机生成数。日志无法确认每架无人机是否被击杀。",
+    "Wave time": "波次用时",
+    "Rotation time": "轮次用时",
+    "Active time": "有效时间",
+    "Live charts return with the next wave": "下一波开始后恢复实时图表",
+    "Back to charts": "返回图表",
+    "Remove ads and support development": "移除广告并支持开发",
+    "Remove ads": "移除广告",
+    "Log out of warframe.market": "退出 WF市场账户",
+    "Main navigation": "主导航",
+    "Data up to date": "数据已更新",
+    "No game data": "暂无游戏数据",
+    "Start playing Warframe": "开始游玩 Warframe",
+    "Prime collection": "Prime 收藏",
+    "Data details": "数据详情",
+    "Troubleshoot data": "排查数据问题",
+    "Collection": "收藏",
+    "Resources": "资源",
+    "Trading": "交易",
+    "Premium": "高级会员",
+    "Planner": "规划",
+    "Mod Planner": "MOD 规划器",
+    "Endo helper": "内融核心助手",
+    "Farm Routes": "刷取路线",
+    "Documentation": "使用文档",
+    "Frequently asked questions": "常见问题",
+    "Help and feedback": "帮助与反馈",
+    "Support AlecaFrame": "支持 AlecaFrame",
+    "Remove ads and see Premium benefits": "移除广告并查看高级会员权益",
+    "Thank you to our supporters": "感谢支持者",
+    "Patreon 'AlecaFrame Enjoyer' tier": "Patreon“ AlecaFrame Enjoyer ”档位",
+    "Version": "版本",
+    "New items found": "发现新物品",
+    "Review items": "查看物品",
+    "Dismiss these finds": "忽略这些新发现",
+    "Fissures": "虚空裂缝",
+    "warframe.market buy and sell": "WF市场买卖",
+    "Buy / Sell": "买入/卖出",
+    "What's new in:": "此版本的新内容：",
+    "AlecaFrame Premium": "AlecaFrame 高级会员",
+    "Remove ads, customize your app, and support AlecaFrame's development": "移除广告、自定义应用并支持 AlecaFrame 开发",
+    "Already a Patreon member?": "已经是 Patreon 会员？",
+    "Link your account to activate your benefits in AlecaFrame": "关联账户以在 AlecaFrame 中启用会员权益",
+    "After linking, wait 1–2 minutes, then restart AlecaFrame": "关联后等待 1–2 分钟，再重启 AlecaFrame",
+    "Support development with a Patreon membership": "通过 Patreon 会员支持开发",
+    "No ads & custom themes": "无广告与自定义主题",
+    "Included with every Patreon tier": "所有 Patreon 档位均包含",
+    "Tier 2+": "第 2 档及以上",
+    "Tier 1": "第 1 档",
+    "Included": "已包含",
+    "Review your trades and compare market activity": "回顾交易并比较市场活动",
+    "View Patreon tiers": "查看 Patreon 档位",
+    "Subscribe through your Overwolf account": "通过 Overwolf 账户订阅",
+    "No ads": "无广告",
+    "Custom themes": "自定义主题",
+    "Choose a preset or set your own colors": "选择预设或自定义配色",
+    "Trading Analytics requires Patreon Tier 2+": "交易分析需要 Patreon 第 2 档及以上",
+    "Subscribe with Overwolf": "通过 Overwolf 订阅",
+    "See Patreon or Overwolf for pricing and subscription details": "价格与订阅详情请查看 Patreon 或 Overwolf",
+    "Remember Auto mode?": "记住自动模式？",
+    "Keep your Auto mode setting when AlecaFrame restarts": "在 AlecaFrame 重启后保留自动模式设置",
+    "Warframe data": "Warframe 数据",
+    "AlecaFrame automatically detects your account, inventory and progress as you play": "AlecaFrame 会在游戏过程中自动检测你的账户、仓库和进度",
+    "Warframe must run locally on the same PC as AlecaFrame.": "Warframe 必须与 AlecaFrame 在同一台电脑上本地运行。",
+    "Cloud gaming or playing on another device won’t work.": "云游戏或在其他设备上游玩无法同步。",
+    "Trigger a data update": "触发数据更新",
+    "Enter a relay, then leave and return to your Orbiter. You can repeat this whenever you need an update.": "进入中继站，再离开并返回轨道飞行器。需要更新时可重复此操作。",
+    "Completing missions and entering or leaving other locations also trigger updates": "完成任务以及进入或离开其他地点也会触发更新",
+    "Setup checklist": "设置检查",
+    "Automatic checks are temporarily unavailable. You can review these requirements yourself while we try again.": "自动检查暂时不可用。重试期间，你可以自行核对这些要求。",
+    "Some checks are only available while Warframe is running": "部分检查仅在 Warframe 运行时可用",
+    "Get help on Discord": "在 Discord 获取帮助",
+    "Failed to download the latest game data": "下载最新游戏数据失败",
+    "Close AlecaFrame?": "关闭 AlecaFrame？",
+    "The relic reward overlay won't appear while AlecaFrame is closed": "AlecaFrame 关闭后将不再显示遗物奖励叠加层",
+    "AlecaFrame recommended relics": "AlecaFrame 遗物推荐",
+    "AlecaFrame Riven": "AlecaFrame 裂罅",
+    "Similar listings": "相似挂单",
+    "Suggested rolls": "推荐词条",
+    "Best negatives": "推荐负面词条",
+    "Prices shown are": "所示价格为",
+    "asking prices": "卖家报价",
+    "AlecaFrame trade complete": "AlecaFrame 交易完成",
+    "complete": "已完成",
+    "Leave a positive review": "留下好评",
+    "Add a message (optional)": "添加留言（可选）",
+    "Schedule": "排期",
+    "Run history": "任务记录",
+    "Alerts & favorites": "提醒与收藏",
+    "Loading Arbitrations": "正在加载仲裁",
+    "Archon shards": "执政官源力石",
+    "Archon Shard": "执政官源力石",
+    "Refreshing shards": "正在刷新源力石",
+    "Available": "可用",
+    "Installed": "已安装",
+    "Tauforged shards in your collection": "收藏中的 Tau 紫晶源力石",
+    "Tauforged": "Tau 紫晶",
+    "Showing the last successful snapshot": "正在显示上次成功获取的数据",
+    "Retry": "重试",
+    "Dismiss": "关闭",
+    "Regular": "普通",
+    "Unequipped shards, ready to install or fuse": "未装备的源力石，可用于安装或融合",
+    "Shards currently installed on your Warframes": "当前已安装在战甲上的源力石",
+    "Loading shards…": "正在加载源力石…",
+    "Warframes": "战甲",
+    "Fusion lab": "融合实验室",
+    "Effect guide": "效果指南",
+    "Search Warframes, colors, or effects…": "搜索战甲、颜色或效果…",
+    "Most shards": "源力石最多",
+    "Warframe name": "战甲名称",
+    "Most Tauforged": "Tau 紫晶最多",
+    "Most regular shards": "普通源力石最多",
+    "No shards installed": "未安装源力石",
+    "Inspect shards": "查看源力石",
+    "Show all Warframes": "显示所有战甲",
+    "Requires the Helminth Coalescent Segment": "需要 Helminth 融合模块",
+    "Effect": "效果",
+    "✦ Tauforged": "✦ Tau 紫晶",
+    "Close shard details": "关闭源力石详情",
+    "Warframe details": "战甲详情",
+    "Hide the ingredients of components you already own": "隐藏已拥有部件所需的材料",
+    "Hide completed branches": "隐藏已完成分支",
+    "Craftable": "可铸造",
+    "Reset to 100%": "重置为 100%",
+    "Fit the entire crafting tree": "完整显示铸造树",
+    "Fit": "适应窗口",
+    "Drag to pan, Scroll to zoom, Select a component for details": "拖动平移，滚轮缩放，选择部件查看详情",
+    "Component details": "部件详情",
+    "Select an item in the tree to see what you need and where to find it": "在树中选择物品，查看所需材料及获取地点",
+    "Still needed": "仍然需要",
+    "Totals for this crafting tree": "此铸造树的总计",
+    "Total credits required for the remaining crafting steps": "剩余铸造步骤所需的总现金",
+    "Shortest build time when different recipes are crafted at the same time": "同时铸造不同配方时的最短用时",
+    "in parallel": "并行铸造",
+    "Total build time if every recipe is crafted one after another": "逐一铸造各配方时的总用时",
+    "one at a time": "依次铸造",
+    "Loading crafting tree…": "正在加载铸造树…",
+    "Card view": "卡片视图",
+    "Compact list": "紧凑列表",
+    "Estimated sell value of the newly found copies. Prices can change.": "新获得物品的预估出售总价。价格可能变化。",
+    "Estimated value": "预估价值",
+    "Ducats from the newly found copies.": "新获得物品可兑换的杜卡德金币。",
+    "Loading items and prices…": "正在加载物品和价格…",
+    "Items couldn't be loaded": "无法加载物品",
+    "Try loading your latest finds again": "请尝试重新加载最新获得的物品",
+    "No new tradeable parts": "暂无新获得的可交易部件",
+    "New parts will appear here as you play": "游戏过程中获得的新部件将显示在这里",
+    "Also found:": "还发现了：",
+    "Mark as seen": "标记为已查看",
+    "Search duplicate mods": "搜索重复 MOD",
+    "Most Endo": "内融核心最多",
+    "Most duplicates": "重复数量最多",
+    "Highest price": "价格最高",
+    "Minimum copies to keep per mod, including ranked and equipped copies": "每种 MOD 至少保留的数量，包含已升级和已装备的 MOD",
+    "Keep": "保留",
+    "per mod": "每种 MOD",
+    "Exclude all copies of your favorite mods": "排除所有已收藏 MOD",
+    "Keep favorites": "保留收藏",
+    "Ranked and equipped copies are kept": "已升级和已装备的 MOD 将保留",
+    "Calculating duplicates…": "正在计算重复 MOD…",
+    "Load your Warframe inventory to see duplicate mods": "加载 Warframe 仓库以查看重复 MOD",
+    "No excess unranked mods match your choices": "没有符合条件的多余未升级 MOD",
+    "Mod": "MOD",
+    "Duplicates": "重复数量",
+    "Price each": "单价",
+    "Unranked copies available to dissolve in-game": "可在游戏中溶解的未升级 MOD",
+    "Show all matches": "显示全部结果",
+    "＋ Add target": "＋ 添加目标",
+    "Disconnect plan": "断开规划关联",
+    "Loading sources…": "正在加载来源…",
+    "Add targets": "添加目标",
+    "Foundry categories": "铸造舱分类",
+    "Search foundry": "搜索铸造舱",
+    "Showing the first 100 matches": "正在显示前 100 条结果",
+    "Could not load Foundry": "无法加载铸造舱",
+    "No items match": "没有匹配物品",
+    "Change the category, search, or filters": "请更改分类、搜索词或筛选条件",
+    "Loading item details…": "正在加载物品详情…",
+    "Item details couldn't be loaded": "无法加载物品详情",
+    "Try loading this item again": "请尝试重新加载此物品",
+    "Inventory categories": "仓库分类",
+    "Search inventory": "搜索仓库",
+    "Closest to completion": "最接近集齐",
+    "Ducats per platinum": "每白金可兑换的杜卡德金币",
+    "Set completion": "套装完成度",
+    "Choose which items to keep crafting parts for. Favorites only includes mastered favorites you no longer own, and ignores other crafting needs.": "选择要为哪些物品保留铸造部件。“仅收藏”会计入已精通但不再拥有的收藏物品，并忽略其他铸造需求。",
+    "Keep for crafting": "为铸造保留",
+    "Unowned & unmastered": "未拥有且未精通",
+    "Favorites only": "仅收藏",
+    "Collection progress": "收藏进度",
+    "Owned copies": "拥有数量",
+    "Clear search & filters": "清除搜索和筛选",
+    "Inventory could not be loaded": "无法加载仓库",
+    "Try loading your inventory again": "请尝试重新加载仓库",
+    "Search items": "搜索物品",
+    "No items found. Try another name": "未找到物品，请尝试其他名称",
+    "Search for an item or select Buy / Sell in Inventory": "搜索物品，或在仓库中选择买入/卖出",
+    "Sell orders": "出售订单",
+    "Min": "最低",
+    "Buy orders": "收购订单",
+    "Max": "最高",
+    "Back to prices": "返回价格",
+    "Dismiss error": "关闭错误提示",
+    "Choose type": "选择类型",
+    "Quantity": "数量",
+    "Price / item": "单价",
+    "each": "每个",
+    "Your order": "你的订单",
+    "Hidden": "已隐藏",
+    "No orders found": "未找到订单",
+    "Show all variants": "显示所有变体",
+    "Progress to next rank": "下一段位进度",
+    "Earned XP": "已获得经验",
+    "Potential XP from favorites": "收藏物品可提供的经验",
+    "Hover an item to preview the mastery XP you could gain from it.": "将鼠标悬停在物品上，预览其可提供的精通经验。",
+    "Potential XP from hovered item": "悬停物品可提供的经验",
+    "Best ways to gain mastery": "推荐精通经验来源",
+    "This item's Mastery Rank requirement has not been met.": "尚未达到此物品的段位要求。",
+    "Could not load mastery data": "无法加载精通数据",
+    "No recommendations in this mode": "此模式下暂无推荐",
+    "Choose Easy, From relics, or With platinum": "请选择“简单”“来自遗物”或“使用白金”",
+    "Updating…": "正在更新…",
+    "Loading mods…": "正在加载 MOD…",
+    "Close details": "关闭详情",
+    "Join the AlecaFrame community": "加入 AlecaFrame 社区",
+    "The most advanced Warframe companion app, used by 150,000 Tenno every month": "功能丰富的 Warframe 助手，每月有 150,000 名 Tenno 使用",
+    "While you play": "游戏过程中",
+    "Relic picks, trade updates, and Riven comparisons, right in game": "在游戏内查看遗物奖励、交易更新和裂罅对比",
+    "Your inventory, updated as you play": "仓库随游戏进程自动更新",
+    "Keep AlecaFrame open alongside Warframe": "游玩 Warframe 时保持 AlecaFrame 运行",
+    "Play Warframe on this PC": "在本机游玩 Warframe",
+    "Keep AlecaFrame open while you play Warframe on this computer": "在此电脑上游玩 Warframe 时保持 AlecaFrame 运行",
+    "Play as normal": "正常游玩即可",
+    "AlecaFrame receives inventory updates regularly while you play, keeping your collection up to date": "游戏过程中 AlecaFrame 会定期接收仓库更新，保持收藏数据同步",
+    "Need a fresh update?": "需要立即更新？",
+    "Enter or leave a world, such as a relay, to trigger an inventory update": "进入或离开中继站等地点，即可触发仓库更新",
+    "Powered by Overwolf": "由 Overwolf 提供支持",
+    "AlecaFrame receives inventory updates through Overwolf's Warframe integration while you play": "游戏过程中 AlecaFrame 通过 Overwolf 的 Warframe 集成接收仓库更新",
+    "Read DE's policy": "查看 DE 的政策",
+    "Inventory not updating?": "仓库未更新？",
+    "Open your account panel in the left sidebar and choose Troubleshoot data for guided checks": "打开左侧边栏的账户面板，选择“排查数据问题”以进行引导检查",
+    "You don't need to enter your Warframe password in AlecaFrame. Signing in to warframe.market is separate and optional": "无需在 AlecaFrame 中输入 Warframe 密码。WF市场登录独立且可选。",
+    "More connection help": "更多连接帮助",
+    "You can replay this tour in Settings": "可在设置中重新查看此引导",
+    "Your trading": "你的交易",
+    "Market activity": "市场活动",
+    "Trading analytics": "交易分析",
+    "Loading relic rewards…": "正在加载遗物奖励…",
+    "Relic details couldn't be loaded": "无法加载遗物详情",
+    "Try opening this relic again": "请尝试重新打开此遗物",
+    "Relic Planner": "遗物规划器",
+    "Relic planner": "遗物规划器",
+    "Void traces available for refining relics": "可用于精炼遗物的虚空光体",
+    "Relic categories": "遗物分类",
+    "Search relics": "搜索遗物",
+    "Reverse order": "反向排序",
+    "Platinum value": "白金价值",
+    "Ducat value": "杜卡德金币价值",
+    "Missing rewards": "缺少的奖励",
+    "Amount owned": "拥有数量",
+    "Best upgrade, platinum": "最佳精炼，白金",
+    "Best upgrade, ducats": "最佳精炼，杜卡德金币",
+    "Ownership uses the selected refinement. With no refinement selected, Missing shows relics with no copies at any refinement.": "拥有状态按所选精炼等级计算。未选择精炼等级时，“缺少”会显示所有精炼等级均未拥有的遗物。",
+    "Number of players opening the same relic at the same refinement": "开启相同遗物且精炼等级相同的玩家人数",
+    "Players opening this relic": "开启此遗物的玩家",
+    "1 player": "1 名玩家",
+    "2 players": "2 名玩家",
+    "3 players": "3 名玩家",
+    "4 players": "4 名玩家",
+    "Use the current filters in the in-game relic recommendation overlay, which always shows owned relics": "将当前筛选用于游戏内遗物推荐叠加层；叠加层始终只显示已拥有的遗物",
+    "Apply filters to overlay": "将筛选应用到叠加层",
+    "New inventory data is available": "有新的仓库数据可用",
+    "Update analysis": "更新分析",
+    "Relic analysis": "遗物分析",
+    "Compare rewards, expected values, and refinements": "比较奖励、预期价值和精炼等级",
+    "Analyze relics": "分析遗物",
+    "Copies owned across these refinements": "这些精炼等级下的总拥有数量",
+    "Listed": "已挂单",
+    "Favorite relic or contains a favorite reward": "已收藏的遗物或包含收藏奖励的遗物",
+    "Open relic details": "打开遗物详情",
+    "Average best reward per run for the selected squad size. Each player uses the same relic and refinement. Platinum and ducats are evaluated separately.": "所选小队人数下每次任务的平均最优奖励。每位玩家使用相同遗物和精炼等级，白金与杜卡德金币价值分别计算。",
+    "Refinement": "精炼等级",
+    "Avg.": "平均",
+    "Open for refinement details": "打开精炼详情",
+    "Showing the first 50 matches": "正在显示前 50 条结果",
+    "Please wait while your relics are prepared": "正在准备遗物数据，请稍候",
+    "Resource inventory": "资源仓库",
+    "Crafting helper": "铸造助手",
+    "Open Warframe and return to your Orbiter to load your inventory. Your craftable favorites still appear here.": "打开 Warframe 并返回轨道飞行器以加载仓库。已收藏的可铸造物品仍会显示在这里。",
+    "Some recipes are unavailable or incomplete. The list below is a partial estimate; check the marked goals.": "部分配方不可用或不完整。以下列表仅为部分估算，请检查标记的目标。",
+    "Your favorites": "你的收藏",
+    "Add favorites": "添加收藏",
+    "Remove from favorites": "取消收藏",
+    "Remove from favorites?": "取消收藏？",
+    "Confirm removal from favorites": "确认取消收藏",
+    "Cancel": "取消",
+    "No crafting favorites": "暂无铸造收藏",
+    "Add craftable items to your favorites to see their materials": "收藏可铸造物品以查看所需材料",
+    "Browse craftable items": "浏览可铸造物品",
+    "Search materials or locations": "搜索材料或地点",
+    "Most goals helped": "满足目标最多",
+    "Largest shortage": "缺口最大",
+    "Most owned": "拥有最多",
+    "Material": "材料",
+    "Allocated to this plan / total needed, including pending crafts and surplus from planned batches": "分配给此规划的数量/总需求，含待完成铸造及计划批次的余量",
+    "Progress": "进度",
+    "Next step": "下一步",
+    "Allocated to this plan / total needed": "分配给此规划的数量/总需求",
+    "Show more materials": "显示更多材料",
+    "Show everything": "显示全部",
+    "Search resources by name": "按名称搜索资源",
+    "owned": "已拥有",
+    "Sources & details": "来源与详情",
+    "Show more resources": "显示更多资源",
+    "No resources match": "没有匹配资源",
+    "Try another name or clear the filters": "请尝试其他名称或清除筛选",
+    "In inventory": "仓库中",
+    "In Foundry": "铸造舱中",
+    "Needed for plan": "规划所需",
+    "Used by your favorites": "收藏物品所需",
+    "Reusable blueprint, one copy needed": "可重复使用的蓝图，只需一份",
+    "Known drop sources": "已知掉落来源",
+    "Open wiki": "打开维基",
+    "Loading your Riven…": "正在加载裂罅…",
+    "Couldn't load this Riven": "无法加载此裂罅",
+    "Check the listing link or try again": "请检查挂单链接或重试",
+    "Veiled rivens": "未揭示裂罅",
+    "Your veiled rivens could not be loaded.": "无法加载未揭示裂罅。",
+    "No veiled rivens here": "此处暂无未揭示裂罅",
+    "Try another category or search. Your stash updates as you play Warframe.": "请尝试其他分类或搜索词。裂罅库存会随游戏进程更新。",
+    "Unveiled rivens": "已揭示裂罅",
+    "warframe.market Riven URL or ID": "WF市场裂罅链接或 ID",
+    "Open listing": "打开挂单",
+    "Your unveiled rivens could not be loaded.": "无法加载已揭示裂罅。",
+    "No rivens match": "没有匹配裂罅",
+    "Try changing your search, category, or filters": "请更改搜索词、分类或筛选条件",
+    "Riven finder": "裂罅查找器",
+    "Lowest on warframe.market": "WF市场最低价",
+    "Loading weapon…": "正在加载武器…",
+    "Couldn't load this weapon": "无法加载此武器",
+    "Please try again": "请重试",
+    "No weapon selected": "未选择武器",
+    "Choose a weapon": "选择武器",
+    "Riven sniper": "裂罅狙击器",
+    "New alert": "新建提醒",
+    "Play Warframe on this PC so AlecaFrame can detect your account.": "请在本机游玩 Warframe，以便 AlecaFrame 检测账户。",
+    "Delete alert": "删除提醒",
+    "Any attribute combination": "任意词条组合",
+    "Price": "价格",
+    "Minimum match": "最低匹配度",
+    "Negative": "负面词条",
+    "No saved alerts": "暂无已保存提醒",
+    "Save a search in Finder to create an alert": "在查找器中保存搜索以创建提醒",
+    "Discord notifications": "Discord 通知",
+    "Send matching listings to your Discord channel using a webhook": "通过 Webhook 将匹配挂单发送到你的 Discord 频道",
+    "Webhook URL": "Webhook 地址",
+    "Save settings": "保存设置",
+    "App & startup": "应用与启动",
+    "Get to know AlecaFrame": "了解 AlecaFrame",
+    "Replay welcome tour": "重新查看欢迎引导",
+    "Developer tools": "开发者工具",
+    "Opening...": "正在打开…",
+    "Open debug window": "打开调试窗口",
+    "Automatically open the live Arbitration window when a run starts": "仲裁任务开始时自动打开实时仲裁窗口",
+    "Inventory & mastery": "仓库与精通",
+    "Warframe.market": "WF市场",
+    "Bulk \"lowest price\" updates": "批量更新最低价",
+    "AlecaFrame (recommended)": "AlecaFrame（推荐）",
+    "warframe.market (live)": "WF市场（实时）",
+    "AlecaFrame prices make updates faster and safer, with better protection against price manipulation. Choose warframe.market to check live prices instead. Orders stay unchanged if no matching price is found.": "AlecaFrame 价格可更快、更安全地更新，并更好地防范价格操纵。选择 WF市场可改为查询实时价格。未找到匹配价格的订单将保持不变。",
+    "In-game traders only in Buy / Sell": "买入/卖出中只显示游戏中的交易者",
+    "Turn off to also show Online and Offline traders": "关闭后也会显示在线和离线交易者",
+    "Trading & rivens": "交易与裂罅",
+    "Warframe menu scale": "Warframe 菜单缩放",
+    "Match the Menu Scale setting in Warframe": "与 Warframe 的菜单缩放设置保持一致",
+    "Legacy (ONLY <=1080p)": "旧版（仅限 1080p 及以下）",
+    "Autodetect": "自动检测",
+    "Custom Menu Scale value": "自定义菜单缩放值",
+    "Delivery & sound": "通知发送与声音",
+    "Discord webhook URL": "Discord Webhook 地址",
+    "World cycle reminders": "世界周期提醒",
+    "Notify before the cycle changes (minutes)": "周期切换前提醒（分钟）",
+    "Warframe conversations": "Warframe 聊天",
+    "Message template (accepts Discord pings)": "消息模板（支持 Discord 提及）",
+    "Use <PLAYER_NAME> for the Warframe username": "使用 <PLAYER_NAME> 表示 Warframe 用户名",
+    "Warframe.market messages": "WF市场消息",
+    "Use <WFM_MESSAGE> for the message content": "使用 <WFM_MESSAGE> 表示消息内容",
+    "Colors & overlays": "配色与叠加层",
+    "Theme name": "主题名称",
+    "Theme author": "主题作者",
+    "Release channel": "更新通道",
+    "Choose Normal or try upcoming updates in Beta": "选择正式版，或在测试版中体验即将推出的更新",
+    "Export all my data": "导出我的所有数据",
+    "Save a copy of your recorded data to your desktop": "将已记录的数据副本保存到桌面",
+    "Your stats": "你的统计",
+    "Show trades": "显示交易",
+    "Charts": "图表",
+    "Date range": "日期范围",
+    "Choose a valid date range": "请选择有效的日期范围",
+    "Not shared": "未分享",
+    "Balance": "余额",
+    "Group by": "分组方式",
+    "Daily": "每日",
+    "Weekly": "每周",
+    "Monthly": "每月",
+    "Yearly": "每年",
+    "Year": "年份",
+    "Hover for a summary, click for activity details. Dates use UTC.": "悬停查看摘要，点击查看活动详情。日期采用 UTC。",
+    "Net change in range": "所选期间净变化",
+    "This metric is not shared in this link": "此链接未分享该指标",
+    "Hide trades": "隐藏交易",
+    "Clear search": "清除搜索",
+    "Recorded activity, UTC": "已记录活动（UTC）",
+    "No daily snapshots for this period. This does not mean zero activity.": "此期间没有每日快照，并不表示没有活动。",
+    "Last recorded mastery rank": "最近记录的段位",
+    "Prime completion": "Prime 完成度",
+    "Trade details": "交易详情",
+    "Trade history is not shared in this link": "此链接未分享交易记录",
+    "Trade history is only available when the game language is set to English": "只有游戏语言为英语时才能记录交易历史",
+    "here": "这里",
+    "to try again": "重试",
+    "Vitus Essence:": "生息精华：",
+    "Vitus Essence": "生息精华",
+    "Price × quantity of the sell orders shown, including hidden orders": "所示出售订单的价格乘以数量，包含隐藏订单",
+    "Sell value": "出售总值",
+    "Price × quantity of the buy orders shown, including hidden orders": "所示收购订单的价格乘以数量，包含隐藏订单",
+    "Buy value": "收购总值",
+    "Refresh orders": "刷新订单",
+    "Visibility": "可见性",
+    "Lowest sell": "最低售价",
+    "Actions": "操作",
+    "View market listings": "查看市场挂单",
+    "Compare": "比较",
+    "Edit": "编辑",
+    "Increase listed quantity by 1": "挂单数量加 1",
+    "Remove order": "移除订单",
+    "Review quantity": "核对数量",
+    "Edit order": "编辑订单",
+    "Platinum / item": "白金单价",
+    "Save": "保存",
+    "Loading your orders…": "正在加载订单…",
+    "Prices already updated will be kept if you cancel": "取消后将保留已更新的价格",
+    "Refresh contracts": "刷新合约",
+    "List a Riven": "发布裂罅挂单",
+    "Direct sales": "直接出售",
+    "Auctions": "拍卖",
+    "View Riven details": "查看裂罅详情",
+    "Buyout": "一口价",
+    "Modifier details are unavailable": "词条详情不可用",
+    "Not found in your inventory": "未在仓库中找到",
+    "Review": "查看",
+    "Details & edit": "详情与编辑",
+    "Website": "网站",
+    "Remove contract": "移除合约",
+    "Remove": "移除",
+    "Loading your contracts…": "正在加载合约…",
+    "Sign in to warframe.market": "登录 WF市场",
+    "Email": "邮箱",
+    "Password": "密码",
+    "New to warframe.market?": "首次使用 WF市场？",
+    "Create an account": "创建账户",
+    "Usually sign in with Steam?": "通常通过 Steam 登录？",
+    "Add an email and password in your warframe.market account settings, then use them here": "请先在 WF市场账户设置中添加邮箱和密码，再使用它们在此登录",
+    "warframe.market account settings": "WF市场账户设置",
+    "warframe.market is unavailable": "WF市场暂不可用",
+    "The market is responding slowly or could not be reached. Try again in a moment.": "市场响应缓慢或无法连接，请稍后重试。",
+    "Open warframe.market": "打开 WF市场",
+    "Prime Resurgence rewards, Hover or click": "PRIME 重生奖励，悬停或点击查看",
+    "Resurgence": "重生",
+    "Rotation,": "轮换，",
+    "Baro Ki’Teer rewards, Hover or click": "Baro Ki’Teer 商品，悬停或点击查看",
+    "Daily, weekly and Sortie timers, Hover or click": "每日、每周与突击计时，悬停或点击查看",
+    "Resets": "重置",
+    "This week’s Circuit rewards, Hover or click": "本周回廊奖励，悬停或点击查看",
+    "World cycles": "世界周期",
+    "Duviri": "双衍悖论",
+    "Time until the next Duviri Spiral": "距离下一次双衍悖论轮回的时间",
+    ", next": "，下一个",
+    "Open Arbitration schedule": "打开仲裁排期",
+    "until it starts": "后开始",
+    "Alerts, Invasions & events": "警报、入侵与活动",
+    "View reward missions, Hover or click": "查看奖励任务，悬停或点击查看",
+    "Choose rewards and notifications": "选择奖励和通知",
+    "No matching rewards right now.": "当前没有匹配奖励。",
+    "Choose rewards with the bell": "点击铃铛选择奖励",
+    "fissures": "裂缝",
+    "Normal + Steel Path": "普通与钢铁之路",
+    "Void Storms": "虚空风暴",
+    "All modes": "全部模式",
+    "Railjack Void Storm": "九重天虚空风暴",
+    "Matches a fissure alert rule": "符合裂缝提醒规则",
+    "Try a different relic tier or mission mode": "请尝试其他遗物纪元或任务模式",
+    "Reset filters": "重置筛选",
+    "Close alert settings": "关闭提醒设置",
+    "Notify me about selected rewards": "提醒我所选奖励",
+    "Catalysts": "催化剂",
+    "Reactors": "反应堆",
+    "Exilus adapters": "特殊功能连接器",
+    "Add a weapon part…": "添加武器部件…",
+    "Remove weapon part": "移除武器部件",
+    "Reward data is unavailable. Retrying…": "奖励数据不可用，正在重试…",
+    "No active Alerts, Invasions or events offer your selected rewards": "当前警报、入侵和活动均不提供所选奖励",
+    "Resets & Sortie": "重置与突击",
+    "Daily reset: standing caps, daily tribute and Steel Path alerts": "每日重置：声望上限、每日献礼和钢铁之路警报",
+    "Daily reset": "每日重置",
+    "Time until the next daily sortie": "距离下次每日突击的时间",
+    "Weekly reset: Archon Hunt, Circuit, Nightwave and weekly traders": "每周重置：执政官猎杀、回廊、午夜电波和每周商人",
+    "Weekly reset": "每周重置",
+    "This week’s rewards": "本周奖励",
+    "Rewards are not available yet": "奖励尚不可用",
+    "Check back when Baro arrives to see his stock": "Baro 抵达后可查看商品",
+    "Searching…": "正在搜索…",
+    "Loading…": "正在加载…",
+    "Saving…": "正在保存…",
+    "Posting…": "正在发布…",
+    "Posted": "已发布",
+    "Cancelling…": "正在取消…",
+    "Confirm": "确认",
+    "Copied": "已复制",
+    "Whisper": "私聊",
+    "Rank": "等级",
+    "Amber stars": "琥珀星",
+    "Cyan stars": "青蓝星",
+    "No matching orders": "没有匹配订单",
+    "No orders yet": "暂无订单",
+    "Try another search or clear your filters.": "请尝试其他搜索词或清除筛选。",
+    "Create an order to start buying or selling items.": "创建订单以开始买卖物品。",
+    "Reset search & filters": "重置搜索和筛选",
+    "New order": "新建订单",
+    "Sold 1": "已售出 1 个",
+    "Bought 1": "已买入 1 个",
+    "Mark one copy as sold": "将 1 个标记为已售出",
+    "Mark one copy as bought": "将 1 个标记为已买入",
+    "Search is unavailable. Try again.": "搜索暂不可用，请重试。",
+    "Choose an item": "选择物品",
+    "Loading market offers…": "正在加载市场报价…",
+    "No item selected": "未选择物品",
+    "Sign in to post an order": "登录以发布订单",
+    "Create a sell order": "创建出售订单",
+    "Create a buy order": "创建收购订单",
+    "Sign in to post": "登录以发布",
+    "Post sell": "发布出售",
+    "Post buy": "发布收购",
+    "Sell order posted": "出售订单已发布",
+    "Buy order posted": "收购订单已发布",
+    "item": "个物品",
+    "items": "个物品",
+    "available": "可供出售",
+    "wanted": "需要收购",
+    "Ownership is unavailable for this item": "此物品的拥有数量不可用",
+    "Copies in your latest inventory": "最新仓库数据中的拥有数量",
+    "Compare live market listings": "比较实时市场挂单",
+    "Unranked reference price; this listing has an intermediate rank. Click to compare listings.": "未升级参考价；此挂单为中间等级。点击比较挂单。",
+    "Select a component for details": "选择部件查看详情",
+    "Common": "常见",
+    "Uncommon": "罕见",
+    "Rare": "稀有",
+    "Legendary": "传说",
+    "Over-listed": "挂单超量",
+    "More to list": "可追加挂单",
+    "Already listed": "已挂单",
+    "Crafting unknown": "铸造需求未知",
+    "Listings unverified": "挂单未验证",
+    "Availability not verified": "可用数量未验证",
+    "Complete sets owned": "已拥有的完整套装数量",
+    "Copies in your inventory": "仓库中的数量",
+    "You have an order placed on warframe.market": "你已在 WF市场挂单",
+    "Resulting item owned or mastered": "目标物品已拥有或已精通",
+    "Crafting requirements could not be verified. This part is excluded from Safe to list.": "无法验证铸造需求。此部件不计入可安全挂单数量。",
+    "Sell listings could not be verified. Sign in to warframe.market and let your orders sync. This part is excluded from Safe to list until its listings are verified.": "无法验证出售挂单。请登录 WF市场并同步订单。验证挂单前，此部件不计入可安全挂单数量。",
+    "Remove this many copies from your sell listings to protect your crafting reserve and avoid listing more than you own.": "请从出售挂单中移除此数量，以保留铸造储备并避免挂单数量超过拥有数量。",
+    "Additional copies you can safely list on warframe.market. Copies already listed and copies kept for crafting have been subtracted.": "可在 WF市场安全追加挂单的数量，已扣除已挂单及为铸造保留的数量。",
+    "Crafting requirements are unavailable. AlecaFrame cannot determine how many copies to keep.": "铸造需求不可用，AlecaFrame 无法确定需要保留的数量。",
+    "No copies need to be kept for crafting.": "无需为铸造保留。",
+    "Sign in to warframe.market and let your orders sync to verify listed quantities.": "请登录 WF市场并同步订单以验证挂单数量。",
+    "Copies in your sell orders, including hidden orders and listed sets. Buy orders do not reserve copies.": "出售订单中的数量，含隐藏订单和套装挂单。收购订单不预留物品。",
+    "Copies in your sell orders, including hidden orders and listed sets. Buy orders do not reserve copies. Your listings exceed your spare copies. Reduce the listed quantity to protect the copies you need to keep.": "出售订单中的数量，含隐藏订单和套装挂单。收购订单不预留物品。挂单已超过多余数量，请减少挂单以保留所需物品。",
+    "Find your next Arbitration": "寻找下一场仲裁",
+    "Mission type": "任务类型",
+    "Community farming tier": "社区刷取评级",
+    "Community farming tiers": "社区刷取评级",
+    "Personal choices": "个人偏好",
+    "Favorite nodes": "收藏节点",
+    "Matches my alert preferences": "符合我的提醒偏好",
+    "Reminders": "提醒",
+    "This forecast has not been refreshed for over 24 hours. Arbitration notifications are paused until fresh data is available.": "此预测已超过 24 小时未刷新。获取新数据前，仲裁通知将暂停。",
+    "Forecast ready": "预测已就绪",
+    "Cached forecast": "缓存预测",
+    "Stale forecast, alerts paused": "预测已过期，提醒已暂停",
+    "Forecast unavailable": "预测不可用",
+    "Community forecast": "社区预测",
+    "No preferences set": "尚未设置偏好",
+    "Matches unavailable": "匹配结果不可用",
+    "No favorite nodes": "暂无收藏节点",
+    "No matching rotation": "没有匹配轮换",
+    "Filter by mission, node, or favorites": "按任务、节点或收藏进行筛选",
+    "Load a forecast to see missions matching your preferences": "加载预测以查看符合偏好的任务",
+    "Only favorite nodes is enabled, but no nodes are starred. Add favorites on the schedule or include non-favorite nodes": "已启用“仅收藏节点”，但尚未收藏节点。请在排期中添加收藏或包含未收藏节点。",
+    "Your preferences have no matches in the next seven days": "未来七天没有符合偏好的任务",
+    "Delivery off": "通知发送已关闭",
+    "Local time": "本地时间",
+    "Mission types": "任务类型",
+    "Planets": "星球",
+    "Factions": "派系",
+    "All Arbitration missions": "全部仲裁任务",
+    "Not available": "不可用",
+    "The Arbitration forecast took too long to load. Try again.": "仲裁预测加载超时，请重试。",
+    "The Arbitration forecast could not be refreshed. Try again.": "无法刷新仲裁预测，请重试。",
+    "The Arbitration forecast was incomplete. Try again.": "仲裁预测数据不完整，请重试。",
+    "The Arbitration forecast could not be loaded. Try again.": "无法加载仲裁预测，请重试。",
+    "Your Arbitration preferences could not be saved. Retrying automatically.": "无法保存仲裁偏好，正在自动重试。",
+    "Your Arbitration preferences could not be saved. Try again.": "无法保存仲裁偏好，请重试。",
+    "This reminder has already been delivered or the rotation has started.": "此提醒已发送，或该轮换已经开始。",
+    "Reminder removed.": "提醒已移除。",
+    "Arbitration alert preferences saved.": "仲裁提醒偏好已保存。",
+    "The Arbitration window could not be opened. Try again.": "无法打开仲裁窗口，请重试。",
+    "Your preferences": "你的偏好",
+    "Unrated": "未评级",
+    "Enabled": "已启用",
+    "Off": "已关闭",
+    "Paused": "已暂停",
+    "Today": "今天",
+    "Tomorrow": "明天",
+    "Spawn map": "生成位置地图",
+    "Density": "密度",
+    "Points": "点位",
+    "Top, X / Z": "俯视，X / Z",
+    "Side, X / Y": "侧视，X / Y",
+    "Front, Y / Z": "正视，Y / Z",
+    "All spawns": "全部生成记录",
+    "No spawn coordinates in this range": "此范围内没有生成坐标",
+    "Only positions recorded in the log appear here": "此处仅显示日志中记录的位置",
+    "Defense objective": "防御目标",
+    "Back to history": "返回任务记录",
+    "Loading saved runs": "正在加载已保存任务",
+    "Loading saved runs…": "正在加载已保存任务…",
+    "Run library unavailable": "任务记录库不可用",
+    "Delete saved run?": "删除已保存任务？",
+    "This deletes the saved report, its notes, and its retained log from AlecaFrame. This cannot be undone.": "这将从 AlecaFrame 删除已保存的报告、备注和保留的日志，且无法撤销。",
+    "Export run": "导出任务",
+    "Choose a format, then a destination folder. Each export gets a new filename; existing files are kept.": "选择格式及目标文件夹。每次导出都会使用新文件名，保留已有文件。",
+    "Original run log (.log)": "原始任务日志（.log）",
+    "For other analyzers": "供其他分析工具使用",
+    "Structured report (.json)": "结构化报告（.json）",
+    "Measurements and notes": "测量数据与备注",
+    "Report image (.png)": "报告图片（.png）",
+    "Save this preview": "保存此预览",
+    "Text report (.txt)": "文本报告（.txt）",
+    "Readable summary": "易读摘要",
+    "No original game log was retained for this run. Importing a structured report cannot reconstruct the original events.": "此任务未保留原始游戏日志。导入结构化报告无法重建原始事件。",
+    "Include player names where available": "包含可获取的玩家名称",
+    "Copy summary": "复制摘要",
+    "This report has no captured player names. Original log export preserves game evidence, including any names in the original text.": "此报告未记录玩家名称。导出原始日志会保留游戏证据，包括原文中的名称。",
+    "Image preview": "图片预览",
+    "Interval pace": "间隔节奏",
+    "Run report preview": "任务报告预览",
+    "Date unavailable": "日期不可用",
+    "Perspective unknown": "视角未知",
+    "Unknown node": "未知节点",
+    "Enemy spawns": "敌人生成数",
+    "Cumulative enemy spawn events observed by this log. Does not measure kills or enemies currently alive.": "此日志观测到的累计敌人生成事件数，并非击杀数或当前存活敌人数。",
+    "Drone spawns": "无人机生成数",
+    "Cumulative Arbitration drone spawn events observed by this log. Does not measure drone kills or drops.": "此日志观测到的累计仲裁无人机生成事件数，并非无人机击杀数或掉落数。",
+    "Enemy spawn rate": "敌人生成速率",
+    "Observed enemy spawn events per minute between adjacent captured samples.": "相邻记录样本之间每分钟观测到的敌人生成事件数。",
+    "Observed drone spawn events per minute between adjacent captured samples.": "相邻记录样本之间每分钟观测到的无人机生成事件数。",
+    "Observed agents": "观测到的实体",
+    "Agent population reported by game log samples. May include entities other than enemies; no enemy limit is inferred.": "游戏日志样本报告的实体数量，可能包含敌人以外的实体，不能用于推断敌人数量上限。",
+    "Allied agents": "友方实体",
+    "Allied agent population reported by game log samples, when present.": "游戏日志样本中可获取的友方实体数量。",
+    "The run response was incomplete.": "任务响应数据不完整。",
+    "The run chart data was incomplete.": "任务图表数据不完整。",
+    "The run library response was incomplete.": "任务记录库响应数据不完整。",
+    "The request took too long. Try again.": "请求超时，请重试。",
+    "The request failed. Try again.": "请求失败，请重试。",
+    "The response could not be read. Try again.": "无法读取响应，请重试。",
+    "The request could not be completed. Try again.": "无法完成请求，请重试。",
+    "The file picker returned an invalid file path.": "文件选择器返回了无效路径。",
+    "Unknown agent": "未知实体",
+    "Spawn density": "生成密度",
+    "Enemy spawn": "敌人生成",
+    "Enemy and drone coordinates recorded in this log.": "此日志记录的敌人和无人机坐标。",
+    "Enemy spawn coordinates, drone positions are not present in this log.": "敌人生成坐标，此日志未记录无人机位置。",
+    "Filter saved runs": "筛选已保存任务",
+    "Active waves": "有效波次",
+    "Entire run": "整个任务",
+    "Observed drone spawns": "观测到的无人机生成数",
+    "Positioned enemy spawns": "含位置的敌人生成数",
+    "Total interval": "总间隔",
+    "Expected Vitus unavailable, gameplay timing, drone observations, or reward cycles are missing.": "预期生息精华不可用：缺少任务计时、无人机观测或奖励轮次数据。",
+    "Hourly rates use observed gameplay time, including intermissions.": "每小时速率采用观测到的任务时间，包含波次间隔。",
+    "Sorting uses the lower estimate when a range is shown.": "显示估算范围时按下限排序。",
+    "Complete capture": "完整记录",
+    "Partial capture": "部分记录",
+    "Recorded here": "本机记录",
+    "Imported log": "导入的日志",
+    "Imported report": "导入的报告",
+    "Source unknown": "来源未知",
+    "No complete intervals": "没有完整间隔",
+    "The run could not be saved.": "无法保存任务。",
+    "Run notes saved.": "任务备注已保存。",
+    "The favorite could not be saved.": "无法保存收藏。",
+    "Run added to favorites.": "任务已加入收藏。",
+    "Run removed from favorites.": "任务已取消收藏。",
+    "Choose files": "选择文件",
+    "Choose up to 100 files at a time.": "每次最多选择 100 个文件。",
+    "Import failed.": "导入失败。",
+    "Stopping the import after the current operation.": "当前操作完成后将停止导入。",
+    "The import could not be stopped.": "无法停止导入。",
+    "Unknown mode": "未知模式",
+    "Spawn counts are observed events, not kills or drops.": "生成数量为观测到的事件数，并非击杀数或掉落数。",
+    "Run summary copied.": "任务摘要已复制。",
+    "The report could not be copied.": "无法复制报告。",
+    "Completed interval durations, seconds, full run": "完整任务中已完成间隔的时长（秒）",
+    "No complete interval timings in this capture": "此记录中没有完整的间隔计时",
+    "Times use observed mission boundaries.": "时间以观测到的任务边界为准。",
+    "included where available": "有数据时包含",
+    "game version unknown": "游戏版本未知",
+    "Open original run log in arbi.guide": "在 arbi.guide 打开原始任务日志",
+    "No original log retained, import its game log to use arbi.guide": "未保留原始日志，需导入游戏日志才能使用 arbi.guide",
+    "The run could not be exported.": "无法导出任务。",
+    "Run exported.": "任务已导出。",
+    "A run cannot be deleted while it is recording.": "无法删除正在记录的任务。",
+    "The run could not be deleted.": "无法删除任务。",
+    "Saved run deleted.": "已删除保存的任务。",
+    "Arbitration recorded. Open Run history to view the report.": "仲裁已记录，打开任务记录可查看报告。",
+    "Importing logs": "正在导入日志",
+    "Run history could not be loaded.": "无法加载任务记录。",
+    "Search node, mode, role, or notes": "搜索节点、模式、职责或备注",
+    "Remove favorite run": "取消收藏任务",
+    "Favorite run": "收藏任务",
+    "Cannot delete a run while it is recording": "无法删除正在记录的任务",
+    "Delete saved run": "删除已保存任务",
+    "No runs match these choices": "没有符合条件的任务",
+    "Your first run starts here": "从这里开始记录第一次任务",
+    "Try fewer filters or another search": "请减少筛选条件或尝试其他搜索词",
+    "Play an Arbitration with AlecaFrame running, or import existing game logs and structured run reports": "保持 AlecaFrame 运行并游玩仲裁，或导入已有游戏日志和结构化任务报告",
+    "Capture needs attention": "记录需要检查",
+    "No active Arbitration": "当前没有进行中的仲裁",
+    "The current mission will appear here when its log events are observed.": "检测到当前任务的日志事件后，任务将显示在这里。",
+    "Open in arbi.guide": "在 arbi.guide 打开",
+    "Wave span starts at the first observed wave and includes its intermissions. Full capture also includes setup and the final decision or extraction.": "波次区间从首次观测到的波次开始，包含波次间隔。完整记录还包含准备阶段及最终选择或撤离。",
+    "Wave span": "波次区间",
+    "Observed duration": "观测时长",
+    "No complete boundaries": "没有完整边界",
+    "Increments in the mission's Spawned counter, separate from named agent creations. These are not kills or the number of enemies alive.": "任务 Spawned 计数器的增量，区别于具名实体的创建事件，并非击杀数或存活敌人数。",
+    "Observed drone spawn events, not kills or Vitus drops.": "观测到的无人机生成事件数，并非击杀数或生息精华掉落数。",
+    "Expand observations chart": "展开观测图表",
+    "At least two observed drones are needed to measure their spacing.": "至少观测到两架无人机才能测量生成间隔。",
+    "This capture has no exact drone spawn timestamps in the selected range.": "此记录在所选范围内没有精确的无人机生成时间戳。",
+    "Show fewer types": "收起类型",
+    "Expand interval chart": "展开间隔图表",
+    "Total interval includes the active wave and its observed intermission. Missing timing classifications stay unknown.": "总间隔包含有效波次及观测到的波次间隔。缺少计时分类的部分保持未知。",
+    "Unique drone creations observed during each complete interval, not drone kills or drops.": "各完整间隔中观测到的不重复无人机创建事件数，并非无人机击杀数或掉落数。",
+    "Enemy spawn coordinates observed during each complete interval. Separate from the mission spawn counter.": "各完整间隔中观测到的敌人生成坐标，独立于任务生成计数器。",
+    "For example, damage or support": "例如：输出或辅助",
+    "Setup, positioning, interruptions, or anything to remember": "配置、站位、中断或其他需要记录的内容",
+    "Unsaved changes": "有未保存的更改",
+    "Personal notes, separate from observed evidence": "个人备注，独立于观测数据",
+    "Save notes": "保存备注",
+    "Delete run": "删除任务",
+    "Interval analysis": "间隔分析",
+    "Run earnings could not be loaded.": "无法加载任务收益。",
+    "Eligible drone kills": "符合条件的无人机击杀数",
+    "Your estimate of eligible killed drones. Observed spawns do not establish kills.": "你估计的符合条件的无人机击杀数。观测到生成并不能确认击杀。",
+    "Base drop probability": "基础掉落概率",
+    "0.06 means 6%. Editable baseline from the documented Update 30.5 change.": "0.06 表示 6%。此可编辑基准来自 30.5 更新记录。",
+    "Drop chance multiplier": "掉落概率倍率",
+    "Combined multiplier you want to assume for this segment.": "此分段假定采用的综合倍率。",
+    "Amount per drop": "每次掉落数量",
+    "Vitus per successful collected drop, before an optional companion double.": "每次成功拾取的生息精华数量，不含可选的同伴双倍效果。",
+    "Companion double probability": "同伴双倍概率",
+    "0.18 means an 18% independent chance of doubling a collected drop. Use 0 when absent.": "0.18 表示拾取的掉落物有 18% 独立概率翻倍。无此效果时填 0。",
+    "Fraction collected": "拾取比例",
+    "Estimated fraction of eligible drops you collect. Use 1 only if assuming all drops are collected.": "估计拾取到的符合条件掉落物比例。仅在假定全部拾取时填 1。",
+    "Confirm the conditions below to calculate an estimate.": "确认以下条件后计算估算值。",
+    "Use no more than 16 segments.": "最多使用 16 个分段。",
+    "Enter a whole number for other Vitus.": "其他生息精华数量必须为整数。",
+    "Complete each segment with valid counts, probabilities and multipliers.": "请为每个分段填写有效数量、概率和倍率。",
+    "Save or discard your edits before choosing another run.": "选择其他任务前，请保存或放弃更改。",
+    "This run could not be opened.": "无法打开此任务。",
+    "Enter a whole Vitus amount from 0 to 1,000,000, or leave it blank.": "请输入 0 至 1,000,000 之间的整数生息精华数量，或留空。",
+    "Run earnings saved.": "任务收益已保存。",
+    "Run earnings could not be saved. Your edits are still here.": "无法保存任务收益，已保留你的更改。",
+    "No runs match your search.": "没有符合搜索条件的任务。",
+    "Recorded and imported runs will appear here.": "已记录和导入的任务将显示在这里。",
+    "Recorded locally": "本机记录",
+    "Not reported": "未填写",
+    "Unsaved edits": "有未保存的更改",
+    "Saved with this run": "随此任务保存",
+    "Save earnings": "保存收益",
+    "The run request timed out. Retrying automatically.": "任务请求超时，正在自动重试。",
+    "Run data is unavailable. Retrying automatically.": "任务数据不可用，正在自动重试。",
+    "The run response did not match the current mission.": "任务响应与当前任务不匹配。",
+    "Waiting for the gameplay start": "等待任务开始",
+    "Current wave time": "当前波次用时",
+    "Waiting for wave 1": "等待第 1 波",
+    "Last wave time": "上一波用时",
+    "Final interval": "最终间隔",
+    "Time since the last reward": "距上次奖励的时间",
+    "Includes time between rewards": "包含奖励之间的时间",
+    "Arbitration complete": "仲裁已完成",
+    "Arbitration aborted": "仲裁已中止",
+    "Arbitration failed": "仲裁失败",
+    "Recording interrupted": "记录已中断",
+    "Partial run captured": "已记录部分任务",
+    "Arbitration ended": "仲裁已结束",
+    "No drone telemetry": "无无人机观测数据",
+    "No earlier spawn rate": "无先前生成速率",
+    "First measured wave": "首个测量波次",
+    "On pace": "节奏正常",
+    "Drop blessing, confirmation missing": "掉落祝福，缺少确认",
+    "Drop blessing, unknown": "掉落祝福，状态未知",
+    "Drop blessing expired": "掉落祝福已过期",
+    "Run finished": "任务已结束",
+    "Waiting for run data": "等待任务数据",
+    "Finalizing run report": "正在完成任务报告",
+    "Waiting for the next Arbitration": "等待下一场仲裁",
+    "Uses the arbi.guide model with resource and drop-chance boosters, Resourceful Retriever at 18%, and every observed drone killed and collected. Your Retriever cannot be confirmed from the log. An unknown blessing shows a range.": "采用 arbi.guide 模型，假定启用资源和资源掉落几率加成、资源取物概率为 18%，且每架观测到的无人机均被击杀并拾取掉落物。日志无法确认取物 MOD；祝福状态未知时显示估算范围。",
+    "Installed Archon shards": "已安装的执政官源力石",
+    "Find equipped shards": "查找已装备源力石",
+    "All Warframes": "所有战甲",
+    "With shards": "已安装源力石",
+    "Empty slots": "空槽位",
+    "Fully slotted": "槽位已满",
+    "Shard color": "源力石颜色",
+    "Shard quality": "源力石品质",
+    "Has regular shards": "含普通源力石",
+    "Has Tauforged shards": "含 Tau 紫晶源力石",
+    "Fully Tauforged": "全部为 Tau 紫晶",
+    "Favorite Warframes": "已收藏战甲",
+    "Unknown shard": "未知源力石",
+    "Unrecognized effect": "无法识别的效果",
+    "Effect details unavailable": "效果详情不可用",
+    "This Warframe is no longer in the latest inventory.": "最新仓库中已无此战甲。",
+    "Your Archon shards could not be loaded. Try again.": "无法加载执政官源力石，请重试。",
+    "The shard refresh took too long. Try again.": "源力石刷新超时，请重试。",
+    "The shard response was incomplete. Try again.": "源力石响应数据不完整，请重试。",
+    "Favorite items": "已收藏物品",
+    "Craftable favorites appear in your plan automatically. Favorites are shared across AlecaFrame.": "已收藏的可铸造物品会自动加入规划。收藏在 AlecaFrame 各页面共享。",
+    "Search Warframes, weapons, equipment…": "搜索战甲、武器或装备…",
+    "All categories": "所有分类",
+    "Requires higher mastery": "需要更高段位",
+    "No matching recipes": "没有匹配配方",
+    "Try another name or clear your filters": "请尝试其他名称或清除筛选",
+    "Show more recipes": "显示更多配方",
+    "Cut Gem": "切割宝石",
+    "Materials ready": "材料已齐备",
+    "Waiting for Foundry": "等待铸造完成",
+    "Materials needed": "所需材料",
+    "Needs inventory or recipe data": "需要仓库或配方数据",
+    "your favorites": "你的收藏",
+    "All unlocks": "全部解锁",
+    "remaining unlocks": "剩余解锁",
+    "Find crafting goals": "查找铸造目标",
+    "Not owned or mastered": "未拥有或未精通",
+    "Filter your shopping list": "筛选采购清单",
+    "Filter resources": "筛选资源",
+    "Components to craft": "待铸造部件",
+    "All resources": "所有资源",
+    "Loading recipe…": "正在加载配方…",
+    "Unavailable recipe": "配方不可用",
+    "Calculating resource needs…": "正在计算资源需求…",
+    "Resource needs are unavailable.": "资源需求不可用。",
+    "Not needed": "不需要",
+    "Your plan works for this session, but could not be saved on this device.": "规划在本次会话中有效，但无法保存到此设备。",
+    "Could not update favorites. Try again.": "无法更新收藏，请重试。",
+    "The inventory update took too long. Your saved plan is safe. Try again.": "仓库更新超时，已保存的规划不受影响，请重试。",
+    "Resources could not be updated. Your saved plan is safe. Try again.": "无法更新资源，已保存的规划不受影响，请重试。",
+    "The resource response was incomplete. Try refreshing your inventory.": "资源响应数据不完整，请尝试刷新仓库。",
+    "Resources could not connect to the AlecaFrame plugin. Try again.": "资源页面无法连接 AlecaFrame 插件，请重试。",
+    "Sources could not be loaded. Try again.": "无法加载来源，请重试。",
+    "The saved plan could not be read. It has been kept on this device; new edits will only last for this session.": "无法读取已保存规划，原数据已保留在此设备上。新更改仅在本次会话中有效。",
+    "Choose up to 100 targets. Quantities can be adjusted in your plan.": "最多选择 100 个目标，可在规划中调整数量。",
+    "No matching items": "没有匹配物品",
+    "Choose your targets": "选择目标",
+    "Not owned": "未拥有",
+    "equivalent copies": "等效数量",
+    "Inventory unavailable": "仓库不可用",
+    "Add target": "添加目标",
+    "Updating plan…": "正在更新规划…",
+    "Refresh to recalculate": "刷新以重新计算",
+    "Waiting for inventory": "等待仓库数据",
+    "This plan could not be saved on this device. Your changes will last for this session.": "无法将规划保存到此设备。更改仅在本次会话中有效。",
+    "Your plan could not be refreshed. Your saved targets are safe. Try again.": "无法刷新规划，已保存的目标不受影响，请重试。",
+    "Copied to clipboard.": "已复制到剪贴板。",
+    "Could not copy. Try again.": "无法复制，请重试。",
+    "Your saved plan could not be read. It has been preserved; changes will last for this session.": "无法读取已保存规划，原数据已保留。更改仅在本次会话中有效。",
+    "Screenshot": "截图",
+    "Explore tabs": "浏览功能页面",
+    "In game": "游戏中",
+    "monthly active users": "月活跃用户",
+    "relics opened per month": "每月开启遗物数",
+    "trades analyzed per month": "每月分析交易数",
+    "Rivens graded per month": "每月评估裂罅数",
+    "Check your collection and see what you need for your next craft": "检查收藏并查看下一次铸造所需物品",
+    "See owned, mastered, and crafting items": "查看已拥有、已精通和铸造中的物品",
+    "Check components, resources, and drop locations": "查看部件、资源和掉落地点",
+    "Follow crafting trees and save favorites": "查看铸造树并收藏物品",
+    "Find equipment to level for your next Mastery rank": "查找可升级装备以提升段位",
+    "Check your Mastery progress": "查看精通进度",
+    "Find unmastered equipment you already own": "查找已拥有但尚未精通的装备",
+    "See what to craft or level next": "查看接下来适合铸造或升级的物品",
+    "Browse your tradable items and check what you can spare": "浏览可交易物品并查看多余数量",
+    "See Prime parts, mods, Arcanes, and their prices": "查看 Prime 部件、MOD、赋能及其价格",
+    "Use Keep for crafting and Safe to list before selling": "出售前使用“为铸造保留”和“安全挂单”功能",
+    "Create listings with an optional warframe.market account": "可选登录 WF市场账户以创建挂单",
+    "Choose relics by their rewards, missing items, or expected value": "按奖励、缺少物品或预期价值选择遗物",
+    "Check rewards, ownership, and platinum values": "查看奖励、拥有状态和白金价值",
+    "Compare refinements and reward chances": "比较精炼等级和奖励概率",
+    "Find drop sources and save favorite relics": "查找掉落来源并收藏遗物",
+    "Check your materials, crafting needs, and Archon shards": "查看材料、铸造需求和执政官源力石",
+    "Search your resource inventory": "搜索资源仓库",
+    "Find missing ingredients with Crafting helper": "使用铸造助手查找缺少的材料",
+    "Review installed shards, effects, and fusion recipes": "查看已安装源力石、效果和融合配方",
+    "Review your Rivens and compare similar rolls on the market": "查看裂罅并比较市场上的相似词条",
+    "Browse unveiled and veiled Rivens": "浏览已揭示和未揭示裂罅",
+    "Search weapons, attributes, and asking prices in Finder": "在查找器中搜索武器、词条和卖家报价",
+    "Follow listings with Sniper, with limits based on your plan": "通过狙击器跟踪挂单，可用数量取决于会员方案",
+    "Manage your listings with an optional warframe.market account": "可选登录 WF市场账户以管理挂单",
+    "Manage buy orders, sell orders, and Riven contracts": "管理收购订单、出售订单和裂罅合约",
+    "Update prices, quantities, and listing visibility": "更新价格、数量和挂单可见性",
+    "Check missing items and detect completed trades": "检查缺少的物品并检测已完成交易",
+    "Research prices and trading activity with Premium market tools": "使用高级会员市场工具研究价格与交易活动",
+    "Explore price history and market activity": "查看价格历史和市场活动",
+    "Compare trading opportunities": "比较交易机会",
+    "Open the tab guide for details": "打开页面指南了解详情",
+    "Check the forecast, follow a live run, and review past sessions": "查看预测、跟踪实时任务并回顾历史记录",
+    "Set alerts for preferred missions in the community forecast": "为社区预测中偏好的任务设置提醒",
+    "Follow wave timing and drone activity as you play": "在游戏过程中跟踪波次计时和无人机活动",
+    "Review saved runs and export reports": "查看已保存任务并导出报告",
+    "Track your balances and activity while you use AlecaFrame": "使用 AlecaFrame 时跟踪余额和活动",
+    "Follow Platinum, Ducats, Endo, Credits, Aya, and Vitus": "跟踪白金、杜卡德金币、内融核心、现金、阿耶精华和生息精华",
+    "Review activity and trade history over time": "查看活动与交易历史",
+    "Choose what to share. History starts with recorded data": "自行选择分享内容；历史记录从开始记录数据时算起",
+    "Plan mod upgrades around your Endo and Credits": "按内融核心和现金余额规划 MOD 升级",
+    "Add favorite mods to Mod Planner": "将收藏的 MOD 加入 MOD 规划器",
+    "Compare upgrade costs with your balances": "比较升级费用与当前余额",
+    "Review spare mods in Endo helper": "在内融核心助手中查看多余 MOD",
+    "Relic rewards": "遗物奖励",
+    "Choose a reward with its value and your collection in view": "参考价值和收藏情况选择奖励",
+    "Compare platinum and ducat values for the squad's rewards": "比较小队奖励的白金和杜卡德金币价值",
+    "See which rewards you own or have already mastered": "查看哪些奖励已拥有或已精通",
+    "Relic recommendations": "遗物推荐",
+    "Find your next relic alongside the in-game relic selection screen": "在游戏内遗物选择界面旁选择下一件遗物",
+    "Focus on value or the rewards you still need": "优先考虑价值或仍然需要的奖励",
+    "Apply your Relic planner filters to the recommendations overlay": "将遗物规划器的筛选应用到推荐叠加层",
+    "Trade overlay": "交易叠加层",
+    "One overlay records detected trades in Stats and updates matching warframe.market listings": "交易叠加层会将检测到的交易记入统计，并更新对应 WF市场挂单",
+    "Review traded items, quantities, platinum, and trading partners in Stats": "在统计中查看交易物品、数量、白金和交易对象",
+    "Automatically update or remove matching listings from warframe.market, including sold Rivens": "自动更新或移除对应的 WF市场挂单，包括已售出的裂罅",
+    "Leave positive reviews for traders on warframe.market": "为 WF市场交易者留下好评",
+    "Stats collection and trade detection are enabled by default. Sign in to warframe.market to update listings and review traders": "统计收集和交易检测默认启用。登录 WF市场后可更新挂单并评价交易者。",
+    "Riven overlay": "裂罅叠加层",
+    "Check a Riven linked in chat or compare your options when rerolling": "查看聊天链接中的裂罅，或在重洗时比较选择",
+    "See attribute grades and suggested rolls": "查看词条评级和推荐词条",
+    "Compare similar market listings without leaving the game": "在游戏内比较相似市场挂单",
+    "Could not save tour completion. The tour may appear again next time.": "无法保存引导完成状态，下次可能再次显示引导。",
+    "Could not open the guide. Please try again.": "无法打开指南，请重试。",
+    "View Premium options": "查看高级会员方案",
+    "View guide": "查看指南",
+    "Patreon Tier 2+": "Patreon 第 2 档及以上",
+    "Platform unavailable": "平台不可用",
+    "Status unavailable": "状态不可用",
+    "Trading region unavailable": "交易地区不可用",
+    "Search unavailable": "搜索不可用",
+    "Listing not found on warframe.market.": "未在 WF市场找到此挂单。",
+    "Offers could not be loaded. Try refreshing.": "无法加载报价，请尝试刷新。",
+    "This item is not available on warframe.market.": "WF市场不支持此物品。",
+    "Enter a quantity from 1 to 9,998.": "请输入 1 至 9,998 之间的数量。",
+    "Enter a price from 1 to 800,000 platinum per item.": "请输入 1 至 800,000 白金之间的单价。",
+    "Choose the item type for your order.": "请选择订单物品类型。",
+    "Ranks and star counts must be whole numbers, zero or higher.": "等级和星星数量必须为非负整数。",
+    "Turn off demo mode in Settings to post an order.": "请在设置中关闭演示模式后发布订单。",
+    "Please try again.": "请重试。",
+    "Totals and counts follow the current category, search, and filters.": "总值和数量按当前分类、搜索与筛选结果计算。",
+    "Summary of results below": "以下结果摘要",
+    "visible": "可见",
+    "Bulk actions": "批量操作",
+    "Close bulk actions": "关闭批量操作",
+    "Includes listings outside your current filters": "包含当前筛选之外的挂单",
+    "Create an order": "创建订单",
+    "Choose an item, then set its price and quantity in the trading panel": "选择物品后，在交易面板设置价格和数量",
+    "Close item picker": "关闭物品选择器",
+    "Sell": "出售",
+    "Buy": "收购",
+    "Search could not be loaded": "无法加载搜索结果",
+    "order with missing items": "个订单缺少物品",
+    "orders with missing items": "个订单缺少物品",
+    "Riven not found": "个裂罅未找到",
+    "Rivens not found": "个裂罅未找到",
+    "Update prices to latest": "更新至最新价格",
+    "Source: warframe.market requests. Match sells to the lowest sell and buys to the highest buy from other in-game, English-language traders.": "来源：WF市场实时请求。以其他游戏中英语交易者的最低售价匹配出售价格、最高收购价匹配收购价格。",
+    "Source: AlecaFrame data. Use cached lowest-sell and highest-buy prices.": "来源：AlecaFrame 数据。使用缓存的最低售价和最高收购价。",
+    "Includes hidden orders. Quantities and visibility stay the same. Orders without a matching price for their rank, variant, or pack size are skipped.": "包含隐藏订单。数量和可见性保持不变。等级、变体或组数没有匹配价格的订单将被跳过。",
+    "Keep your listings, but hide them from other players.": "保留挂单，但对其他玩家隐藏。",
+    "Match quantities to inventory": "按仓库校准数量",
+    "Remove missing Rivens": "移除缺失裂罅",
+    "Reduce sell quantities to the copies in your latest inventory. Remove sell orders with no copies left.": "将出售数量减少至最新仓库中的数量，并移除已无库存的出售订单。",
+    "Remove contracts for Rivens not found in your latest inventory.": "移除最新仓库中未找到的裂罅合约。",
+    "Update prices": "更新价格",
+    "Show all": "显示全部",
+    "Hide all": "隐藏全部",
+    "Update listings": "更新挂单",
+    "Remove all": "移除全部",
+    "No matching items. Try another name": "没有匹配物品，请尝试其他名称",
+    "Search for a part, mod, relic, arcane, or another tradeable item": "搜索部件、MOD、遗物、赋能或其他可交易物品",
+    "Shown on warframe.market": "已在 WF市场显示",
+    "Hidden from warframe.market": "已在 WF市场隐藏",
+    "Save or cancel your edit before changing visibility": "请先保存或取消编辑，再更改可见性",
+    "Hide this listing from warframe.market": "在 WF市场隐藏此挂单",
+    "Show this listing on warframe.market": "在 WF市场显示此挂单",
+    "Show orders with missing items in your latest inventory": "显示最新仓库中缺少对应物品的订单",
+    "Show contracts in these results for Rivens not found in your inventory": "显示这些结果中仓库内未找到对应裂罅的合约",
+    "Unknown reward": "未知奖励",
+    "Forest missions": "森林任务",
+    "Cambion Drift": "魔胎之境",
+    "Next match": "下一个匹配任务",
+    "Steel Path, Incarnons": "钢铁之路，灵化武器",
+    "Alert settings could not be loaded.": "无法加载提醒设置。",
+    "Could not confirm the saved alerts. Retry saving your choices.": "无法确认提醒是否已保存，请重新保存。",
+    "No fixed end time": "无固定结束时间",
+    "End time unavailable": "结束时间不可用",
+    "World state unavailable": "世界状态不可用",
+    "Unknown mission": "未知任务",
+    "Filters": "筛选",
+    "Clear filters": "清除筛选",
+    "Close filters": "关闭筛选",
+    "Choose an option": "选择选项",
+    "Host": "主机",
+    "Client": "客机",
+    "Perspective": "视角",
+    "Preparing": "准备中",
+    "Recording": "正在记录",
+    "Ended": "已结束",
+    "Completed": "已完成",
+    "Aborted": "已中止",
+    "Failed": "失败",
+    "Interrupted": "已中断",
+    "Partial": "部分",
+    "Complete": "完整",
+    "Outcome": "结果",
+    "Capture": "记录完整度",
+    "Saved": "已保存",
+    "Wave": "波次",
+    "Rotation": "轮次",
+    "Run": "任务",
+    "Interval": "间隔",
+    "Active": "有效",
+    "Intermissions": "波次间隔",
+    "Setup": "准备",
+    "Unclassified": "未分类",
+    "Recent": "近期",
+    "spawns": "生成数",
+    "agents": "实体",
+    "No observations for this measurement in the selected range": "所选范围内没有此指标的观测数据",
+    "Restore": "还原",
+    "Rules": "规则",
+    "Casual": "休闲",
+    "Optimized": "效率",
+    "Order first": "优先排序",
+    "When you join a squad, you are responsible for making sure you can complete the tasks listed in the title/requirements. Multiple offences will result in a ban. If you are close to meeting the requirements, it is allowed to join the squad and ask in the chat if everyone is ok with your situation.": "加入小队时，你应确保自己能完成标题或要求中列出的任务。多次违规会导致封禁。如果接近要求，可以先加入并在聊天中征求所有成员同意。"
+  });
+
   const dynamicRules = [
+    [/^Wave (\d+)$/i, "第 $1 波"],
+    [/^Rotation (\d+)$/i, "第 $1 轮"],
+    [/^(Wave|Rotation) (\d+)\s*[·,]\s*(.+)$/i, (_, kind, index, suffix) => `第 ${index} ${kind.toLowerCase() === "wave" ? "波" : "轮"} · ${translateString(suffix)}`],
+    [/^Rank (\d+)$/i, "等级 $1"],
+    [/^(\d+) (?:item|items|copies) selected$/i, "已选择 $1 个物品"],
+    [/^(\d+) selected$/i, "已选择 $1 个"],
+    [/^(\d+) nodes in your favorites$/i, "收藏中有 $1 个节点"],
+    [/^(\d+) upcoming rotations in seven days$/i, "未来七天有 $1 场轮换"],
+    [/^(\d+) saved for quick filtering$/i, "已收藏 $1 个，方便快速筛选"],
+    [/^(\d+) selected nodes$/i, "已选择 $1 个节点"],
+    [/^(\d+) minutes? before$/i, "提前 $1 分钟"],
+    [/^(\d+) hours? before$/i, "提前 $1 小时"],
+    [/^Starts at (.+)$/i, "$1 开始"],
+    [/^In ((?:\d+[dhms]\s*)+)$/i, (_, duration) => `${translateString(duration)}后`],
+    [/^(\d+)d\s*(\d+)h$/i, "$1 天 $2 小时"],
+    [/^(\d+)h\s*(\d+)m$/i, "$1 小时 $2 分"],
+    [/^(\d+)m\s*(\d+)s$/i, "$1 分 $2 秒"],
+    [/^(\d+)\s*\/\s*(\d+) orders$/i, "$1 / $2 个订单"],
+    [/^(\d+) listed, (\d+) found in your inventory$/i, "已挂单 $1 个，仓库中找到 $2 个"],
+    [/^Could not refresh your (orders|contracts)\. Your last loaded listings are still shown\.$/i, (_, kind) => `无法刷新${kind.toLowerCase() === "orders" ? "订单" : "合约"}。仍显示上次加载的挂单。`],
+    [/^Refresh offers(?:, Last update: (.+))?$/i, (_, time) => `刷新报价${time ? `，上次更新：${time}` : ""}`],
+    [/^(Sell|Buy) orders, No orders for this variant$/i, (_, kind) => `${kind.toLowerCase() === "sell" ? "出售" : "收购"}订单，此变体暂无订单`],
+    [/^(Sell|Buy) orders, (?:Lowest|Highest) price: (.+) platinum per item$/i, (_, kind, price) => `${kind.toLowerCase() === "sell" ? "出售订单，最低" : "收购订单，最高"}单价：${price} 白金`],
+    [/^Your (sell|buy) order(, Hidden from other players)?$/i, (_, kind, hidden) => `你的${kind.toLowerCase() === "sell" ? "出售" : "收购"}订单${hidden ? "，对其他玩家隐藏" : ""}`],
+    [/^Copy a whisper to (buy from|sell to) (.+)$/i, (_, kind, name) => `复制向 ${name} ${kind.toLowerCase() === "buy from" ? "购买" : "出售"}的私聊消息`],
+    [/^Any (rank|refinement|type)$/i, (_, variant) => `任意${{rank: "等级", refinement: "精炼等级", type: "类型"}[variant.toLowerCase()]}`],
+    [/^Pack of (\d+), (.+) each$/i, "$1 个一组，每个 $2"],
+    [/^(\d+) (available|wanted)$/i, (_, count, kind) => `${kind.toLowerCase() === "available" ? "可供出售" : "需要收购"} ${count} 个`],
+    [/^Show all (\d+)(?: types)?$/i, "显示全部 $1 种"],
+    [/^(\d+) new$/i, "新获得 $1 个"],
+    [/^(.+), community farming tier$/i, "$1，社区刷取评级"],
     [/^(\d+) days?$/i, "$1 天"],
     [/^(\d+) owned$/i, "已拥有 $1"],
     [/^(\d+) new items? found$/i, "发现 $1 个新物品"],
@@ -227,7 +1363,9 @@
     Object.entries(displayOnlyItemTranslations).map(([englishName, chineseName]) => [englishName.toLowerCase(), chineseName])
   );
 
-  const marketPanelSelector = "#inventoryWFMtabBUYSELL, #MyOrdersTab, #MyContractsTab";
+  const marketPanelSelector = "#inventoryWFMtabBUYSELL, #MyOrdersTab, #MyContractsTab, .quoteWorkspace";
+  const marketItemNameSelector = ".wfmItemName, .quoteSelectedItem > strong, .quoteComposerItem, .quoteSuggestion > span, .marketIdentityText > h3, .marketWeapon";
+  const playerIdentitySelector = ".quoteIdentity > strong, .foundryPlayerName, .accountPanelHeader > strong, .tradeUsername, .statsActivityTrade > header > strong > span, #vueContainer > .title > span";
   const displayOnlyItemNameSelector = ".inventoryObject:not(.relicPlanner) .inventoryItemName";
   const chineseMarketSuggestionPrefix = "__alecaframe_zh_market__:";
   const rivenTraitTranslations = [
@@ -350,16 +1488,24 @@
   function addDisplayOnlyItemTranslation(element) {
     if (!(element instanceof Element) || !element.matches(displayOnlyItemNameSelector)) return;
     const label = element.querySelector(":scope > .normalItem");
-    if (!label || label.dataset.zhDisplayOnly === "true") return;
+    if (!label) return;
     const englishName = label.textContent?.trim();
+    if (!englishName || englishName.includes("{{") || label.dataset.zhDisplayEnglish === englishName) return;
     const chineseName = translateDisplayOnlyItemName(englishName);
-    if (!chineseName || chineseName === englishName) return;
+    if (!chineseName || chineseName === englishName) {
+      delete label.dataset.zhDisplayOnly;
+      delete label.dataset.zhLabel;
+      delete label.dataset.zhDisplayEnglish;
+      return;
+    }
     label.dataset.zhDisplayOnly = "true";
+    label.dataset.zhDisplayEnglish = englishName;
     label.dataset.zhLabel = chineseName;
     label.style.setProperty("--zh-item-label-size", `${getDisplayOnlyItemLabelSize(label, chineseName)}px`);
   }
 
   function getDisplayOnlyItemLabelSize(label, chineseName) {
+    if (label.closest(".inventoryCards")) return 16;
     const computedStyle = window.getComputedStyle(label);
     const fontFamily = computedStyle.fontFamily || "sans-serif";
     const fontWeight = computedStyle.fontWeight || "normal";
@@ -400,6 +1546,10 @@
 
   function addDisplayOnlyItemTranslations(root) {
     if (!(root instanceof Element) && root?.nodeType !== Node.DOCUMENT_NODE && root?.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) return;
+    if (root instanceof Element) {
+      const itemName = root.closest(displayOnlyItemNameSelector);
+      if (itemName) addDisplayOnlyItemTranslation(itemName);
+    }
     if (root instanceof Element && root.matches(displayOnlyItemNameSelector)) addDisplayOnlyItemTranslation(root);
     for (const element of root.querySelectorAll?.(displayOnlyItemNameSelector) ?? []) addDisplayOnlyItemTranslation(element);
   }
@@ -513,44 +1663,26 @@
     const inventoryPlugin = window.plugin?.get?.();
     if (!inventoryApp?.refresh || !inventoryPlugin?.getFilteredInventory || inventoryApp.__zhChineseSearchEnabled) return;
 
-    const originalRefresh = inventoryApp.refresh.bind(inventoryApp);
-    const originalGetFilteredInventory = inventoryPlugin?.getFilteredInventory?.bind(inventoryPlugin);
-    inventoryApp.refresh = function (showAll = false) {
-      const searchInput = document.querySelector("#inventorySearch");
-      if (!searchInput) return originalRefresh(showAll);
-
-      const originalSearch = searchInput.value;
-      if (hasChineseCharacters(originalSearch)) {
-        if (typeof originalGetFilteredInventory !== "function") return originalRefresh(showAll);
-
-        inventoryPlugin.getFilteredInventory = function (filterSettings, fullInventory, callback) {
-          const filters = JSON.parse(filterSettings);
-          filters.search = "";
-          const wrappedCallback = (success, data, ducatCount, platCount) => {
-            inventoryPlugin.getFilteredInventory = originalGetFilteredInventory;
-            if (!success) return callback(success, data, ducatCount, platCount);
-            const filteredItems = filterInventoryItemsByChineseSearch(JSON.parse(data), originalSearch);
-            callback(true, JSON.stringify(filteredItems), ducatCount, platCount);
-          };
-          return originalGetFilteredInventory(JSON.stringify(filters), true, wrappedCallback);
-        };
+    // 3.x reads search from Vue instead of #inventorySearch. Wrap the request
+    // boundary so both interfaces keep their original query and request ids.
+    const originalGetFilteredInventory = inventoryPlugin.getFilteredInventory.bind(inventoryPlugin);
+    inventoryPlugin.getFilteredInventory = function (filterSettings, fullInventory, callback) {
+      const filters = JSON.parse(filterSettings);
+      const searchTerm = filters.search || "";
+      if (!hasChineseCharacters(searchTerm)) return originalGetFilteredInventory(filterSettings, fullInventory, callback);
+      filters.search = "";
+      return originalGetFilteredInventory(JSON.stringify(filters), true, (success, data, ducatCount, platCount) => {
+        if (!success) return callback(success, data, ducatCount, platCount);
         try {
-          return originalRefresh(true);
+          const filteredItems = filterInventoryItemsByChineseSearch(JSON.parse(data), searchTerm);
+          // Native totals describe the unfiltered response. Do not present
+          // those totals as if they belonged to the Chinese search result.
+          return callback(true, JSON.stringify(filteredItems), null, null);
         } catch (error) {
-          inventoryPlugin.getFilteredInventory = originalGetFilteredInventory;
-          throw error;
+          console.warn("[AlecaFrame-ZH] Inventory Chinese search failed", error);
+          return callback(success, data, ducatCount, platCount);
         }
-      }
-
-      const englishSearch = getEnglishInventorySearchTerm(originalSearch);
-      if (englishSearch === originalSearch) return originalRefresh(showAll);
-
-      searchInput.value = englishSearch;
-      try {
-        return originalRefresh(showAll);
-      } finally {
-        searchInput.value = originalSearch;
-      }
+      });
     };
     inventoryApp.__zhChineseSearchEnabled = true;
   }
@@ -819,6 +1951,13 @@
       if (!hasChineseCharacters(searchTerm)) return originalUpdateSearchSuggestions();
       this.searchSuggestions = getChineseMarketSearchSuggestions(searchTerm);
       this.doingSearch = true;
+      // In 3.x a stale English request may still be pending while Chinese
+      // suggestions are produced locally. Invalidate it and clear its state.
+      clearTimeout(this.searchTimer);
+      if (typeof this.searchRequestId === "number") this.searchRequestId++;
+      this.searching = false;
+      this.searchError = false;
+      this.activeSuggestion = -1;
     };
     app.suggestionClicked = function (itemName, itemUrlName) {
       if (!itemUrlName?.startsWith(chineseMarketSuggestionPrefix)) {
@@ -839,11 +1978,14 @@
 
   function translateString(value) {
     if (!value || !/[A-Za-z]/.test(value)) return value;
+    // Vue must compile its original expressions and string literals unchanged.
+    // Translate the resulting DOM text after mount instead.
+    if (value.includes("{{") || value.includes("}}")) return value;
     const leading = value.match(/^\s*/)?.[0] ?? "";
     const trailing = value.match(/\s*$/)?.[0] ?? "";
     const core = value.slice(leading.length, value.length - trailing.length);
     if (!core || translatedValues.has(core)) return value;
-    let translated = translations[core] || getDisplayOnlyItemTranslation(core);
+    let translated = translations[core] || translations[core.replace(/\s+/g, " ")] || getDisplayOnlyItemTranslation(core);
     if (!translated) {
       for (const [pattern, replacement] of dynamicRules) {
         if (pattern.test(core)) {
@@ -903,9 +2045,10 @@
     return baseTranslation ? `${baseTranslation} Prime` : null;
   }
 
-  function translateElement(element) {
+  function translateElement(element, includeMarket = false) {
     if (!(element instanceof Element)) return;
-    if (isMarketPanelElement(element)) return;
+    if (element.closest(playerIdentitySelector)) return;
+    if (!includeMarket && isMarketPanelElement(element)) return;
     for (const attribute of ["placeholder", "title", "alt", "aria-label"]) {
       if (element.hasAttribute(attribute)) {
         const current = element.getAttribute(attribute);
@@ -941,6 +2084,7 @@
 
   function translateRivenTraitText(value) {
     if (!value || !/[A-Za-z]/.test(value)) return value;
+    if (value.includes("{{") || value.includes("}}")) return value;
     let translated = value;
     for (const [english, chinese] of rivenTraitTranslations) translated = translated.replaceAll(english, chinese);
     return translated;
@@ -970,7 +2114,54 @@
     if (changed) chart.update("none");
   }
 
+  function translateArbitrationChartText(value) {
+    if (Array.isArray(value)) return value.map(translateArbitrationChartText);
+    if (typeof value !== "string") return value;
+    let translated = translateString(value);
+    const metric = translated.match(/^(.+?):\s*(.+)$/);
+    if (metric) translated = `${translateString(metric[1])}: ${metric[2]}`;
+    translated = translated.replace(/\b(spawns\/min|spawns|agents)\b/g, unit => translations[unit] || unit);
+    return translated;
+  }
+
+  function installArbitrationChartTranslations(attempt = 0) {
+    const Chart = window.Chart;
+    if (!Chart?.register) {
+      if (attempt < 40) setTimeout(() => installArbitrationChartTranslations(attempt + 1), 250);
+      return;
+    }
+    if (Chart.__zhArbitrationLabelsInstalled) return;
+    Chart.register({
+      id: "alecaframeZhArbitrationLabels",
+      beforeUpdate(chart) {
+        if (!chart.canvas?.closest?.(".arbRunChart")) return;
+        for (const dataset of chart.data?.datasets || []) {
+          if (typeof dataset.label === "string") dataset.label = translateString(dataset.label);
+        }
+        for (const axis of Object.values(chart.options?.scales || {})) {
+          if (typeof axis.title?.text === "string") axis.title.text = translateString(axis.title.text);
+        }
+        const callbacks = chart.options?.plugins?.tooltip?.callbacks;
+        if (!callbacks) return;
+        for (const name of ["title", "label"]) {
+          const original = callbacks[name];
+          if (typeof original !== "function" || original.__zhArbitrationLabel) continue;
+          const translated = function (...args) {
+            return translateArbitrationChartText(original.apply(this, args));
+          };
+          translated.__zhArbitrationLabel = true;
+          callbacks[name] = translated;
+        }
+      }
+    });
+    Chart.__zhArbitrationLabelsInstalled = true;
+    for (const chart of Object.values(Chart.instances || {})) {
+      if (chart.canvas?.closest?.(".arbRunChart")) chart.update("none");
+    }
+  }
+
   function translateRivenChallengeText(value) {
+    if (!value || value.includes("{{") || value.includes("}}")) return value;
     const directTranslations = {
       "Kill Enemies while Sliding": "滑行时击杀敌人",
       "Zaw Riven": "Zaw 裂罅",
@@ -1014,10 +2205,21 @@
     addMarketSuggestionTranslation(panel);
     addMarketOrderTitleTranslations(panel);
     translateMarketOwnedLabels(panel);
-    const walker = document.createTreeWalker(panel, NodeFilter.SHOW_TEXT);
+    for (const label of panel.querySelectorAll('.quoteSelectedItem > strong, .quoteComposerItem, .quoteSuggestion > span, .marketIdentityText > h3, .marketWeapon')) {
+      const englishName = label.textContent?.trim();
+      if (!englishName || englishName.includes("{{")) continue;
+      const chineseName = translateDisplayOnlyItemName(englishName);
+      if (chineseName && chineseName !== englishName) label.dataset.zhMarketDisplayName = chineseName;
+      else delete label.dataset.zhMarketDisplayName;
+    }
+    const walker = document.createTreeWalker(panel, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
     let node;
     while ((node = walker.nextNode())) {
-      if (node.parentElement?.closest('.wfmItemName')) continue;
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        translateElement(node, true);
+        continue;
+      }
+      if (node.parentElement?.closest(marketItemNameSelector + ', ' + playerIdentitySelector + ', script, style, noscript, code, pre, textarea')) continue;
       const translated = translateString(node.nodeValue);
       if (translated !== node.nodeValue) node.nodeValue = translated;
     }
@@ -1185,6 +2387,7 @@
     if (root.nodeType === Node.TEXT_NODE) {
       const parent = root.parentElement;
       if (!parent) return;
+      if (parent.closest(playerIdentitySelector)) return;
       if (isMarketPanelElement(parent)) {
         translateMarketPanel(parent);
         return;
@@ -1208,7 +2411,7 @@
     while ((node = walker.nextNode())) {
       if (node.nodeType === Node.TEXT_NODE) {
         const parent = node.parentElement;
-        if (!parent || isMarketPanelElement(parent) || isDisplayOnlyItemName(parent) || /^(SCRIPT|STYLE|NOSCRIPT|CODE|PRE|TEXTAREA)$/i.test(parent.tagName)) continue;
+        if (!parent || parent.closest(playerIdentitySelector) || isMarketPanelElement(parent) || isDisplayOnlyItemName(parent) || /^(SCRIPT|STYLE|NOSCRIPT|CODE|PRE|TEXTAREA)$/i.test(parent.tagName)) continue;
         translateRivenTraitNode(node);
         const translated = translateString(node.nodeValue);
         if (translated !== node.nodeValue) node.nodeValue = translated;
@@ -1242,6 +2445,37 @@
       position: absolute;
       white-space: nowrap;
       width: 100%;
+    }
+    .inventoryCards .inventoryObject .inventoryItemName > .normalItem[data-zh-display-only="true"] {
+      flex: initial;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      text-align: left;
+      width: 100%;
+    }
+    .inventoryCards .inventoryObject .inventoryItemName > .normalItem[data-zh-display-only="true"]::after {
+      color: var(--color-text, #ffffff);
+      font-size: inherit;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .quoteWorkspace [data-zh-market-display-name],
+    #MyOrdersTab [data-zh-market-display-name],
+    #MyContractsTab [data-zh-market-display-name] {
+      color: transparent !important;
+      position: relative;
+    }
+    .quoteWorkspace [data-zh-market-display-name]::after,
+    #MyOrdersTab [data-zh-market-display-name]::after,
+    #MyContractsTab [data-zh-market-display-name]::after {
+      color: var(--color-text, #ffffff);
+      content: attr(data-zh-market-display-name);
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      position: absolute;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     #inventoryWFMtabBUYSELL .wfmRightItemName[data-zh-market-item-label] {
       color: transparent !important;
@@ -1452,7 +2686,9 @@
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
-      characterData: true
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["placeholder", "title", "alt", "aria-label"]
     });
     observerInstalled = true;
   }
@@ -1543,6 +2779,7 @@
         continue;
       }
 
+      if (mutation.type === "attributes") pending.add(mutation.target);
       if (mutation.type === "characterData") pending.add(mutation.target.parentElement);
       for (const node of mutation.addedNodes ?? []) {
         const parent = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
@@ -1627,6 +2864,7 @@
       setInterval(translateTimerStatuses, 5000);
     }
     translateAllMarketPanels();
+    installArbitrationChartTranslations();
     waitForChineseInventorySearch();
     waitForChineseFoundrySearch();
     installFoundryDetailsRequestGuard();

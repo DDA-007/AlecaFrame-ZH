@@ -39,29 +39,6 @@ $localNodeSource = Join-Path $PSScriptRoot ".tools\node\node.exe"
 $ocrSettingsPath = Join-Path $PSScriptRoot "AlecaFrame-ZH.settings.json"
 $relicCaptureSource = Join-Path $PSScriptRoot "Capture-AlecaFrame-WarframeScreen.ps1"
 $relicOcrStateRoot = Join-Path $stateRoot "RelicChineseOcr"
-$targetPages = @(
-    "background.html",
-    "main.html",
-    "AFBuilds.html",
-    "InGameNotification.html",
-    "relicOverlay.html",
-    "relicRecommendation.html",
-    "rivenOverlay.html",
-    "SquadMakingMain.html",
-    "SquadMakingSquad.html",
-    "tradeFinishedNotification.html"
-)
-$scriptTag = '<script src="assets/js/alecaframe-zh-cn.js"></script>'
-$itemTranslationsScriptTag = '<script src="assets/js/alecaframe-zh-cn-items.js"></script>'
-$relicDucatsScriptTag = '<script src="assets/js/alecaframe-zh-cn-relic-ducats.js"></script>'
-$relicOcrBridgeScriptTag = '<script src="assets/js/alecaframe-zh-cn-relic-ocr.js"></script>'
-$rivenOcrBridgeScriptTag = '<script src="assets/js/alecaframe-zh-cn-riven-ocr.js"></script>'
-$rivenOverlayScriptTag = '<script src="assets/js/alecaframe-zh-cn-riven-overlay.js"></script>'
-$relicOverlayScriptTag = '<script src="assets/js/alecaframe-zh-cn-relic-overlay.js"></script>'
-$relicRecommendationScriptTag = '<script src="assets/js/alecaframe-zh-cn-relic-recommendation.js"></script>'
-$relicPlannerCacheScriptTag = '<script src="assets/js/alecaframe-zh-cn-relic-planner-cache.js"></script>'
-$inventoryPriceSyncScriptTag = '<script src="assets/js/alecaframe-zh-cn-inventory-price-sync.js"></script>'
-$inventoryImagesScriptTag = '<script src="assets/js/alecaframe-zh-cn-inventory-images.js"></script>'
 
 function Write-LauncherLog {
     param([string]$Message)
@@ -146,123 +123,22 @@ function Find-OverwolfInstall {
     throw "找不到 Overwolf 安装目录，请先安装或修复 Overwolf。"
 }
 
-function Get-LatestVersionDirectory {
-    $directory = Get-ChildItem -LiteralPath $extensionsRoot -Directory |
-        Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName "manifest.json") } |
-        Sort-Object { [version]$_.Name } -Descending |
-        Select-Object -First 1
-    if (-not $directory) {
-        throw "没有找到 AlecaFrame 安装版本。"
-    }
-    return $directory
-}
-
-function Assert-AppPath {
-    param([string]$Path)
-    $resolvedRoot = [IO.Path]::GetFullPath($extensionsRoot).TrimEnd("\") + "\"
-    $resolvedPath = [IO.Path]::GetFullPath($Path)
-    if (-not $resolvedPath.StartsWith($resolvedRoot, [StringComparison]::OrdinalIgnoreCase)) {
-        throw "安全检查失败：路径不属于 AlecaFrame 扩展目录。"
-    }
-}
-
-function Restore-OfficialFiles {
-    param(
-        [string]$Version,
-        [string]$VersionPath
-    )
-    Assert-AppPath $VersionPath
-    $opk = Join-Path $packagesRoot "$Version\app.opk"
-    $backupRoot = Join-Path $stateRoot "OfficialBackup\$Version"
-    $entries = @("_metadata/verified_contents.json", "web/assets/js/relicOverlay/main.js")
-    $entries += $targetPages | ForEach-Object { "web/$_" }
-
-    $backupComplete = $true
-    foreach ($entryName in $entries) {
-        $backupFile = Join-Path $backupRoot ($entryName.Replace("/", "\"))
-        if (-not (Test-Path -LiteralPath $backupFile)) {
-            $backupComplete = $false
-            break
+function Add-AlecaFramePageScripts {
+    param([string]$Content, [string]$RelativePage, [string[]]$Scripts)
+    if ($Content -notmatch '(?i)</body\s*>') { throw "页面缺少 </body>，无法注入：$RelativePage" }
+    $depth = ($RelativePage.Split('/').Count - 1)
+    $assetPrefix = ('../' * $depth) + 'assets/js/'
+    foreach ($scriptFile in $Scripts) {
+        $source = $assetPrefix + $scriptFile
+        $scriptPattern = '(?i)<script\b[^>]*\bsrc\s*=\s*["'']' + [regex]::Escape($source) + '["''][^>]*>'
+        if (-not [regex]::IsMatch($Content, $scriptPattern)) {
+            $tag = '<script src="' + $source + '"></script>'
+            $insertion = '    ' + $tag + "`r`n"
+            $Content = ([regex]'(?i)</body\s*>').Replace($Content,
+                [Text.RegularExpressions.MatchEvaluator]{ param($match) $insertion + $match.Value }, 1)
         }
     }
-
-    if (Test-Path -LiteralPath $opk) {
-        Add-Type -AssemblyName System.IO.Compression
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        $archive = [IO.Compression.ZipFile]::OpenRead($opk)
-        try {
-            foreach ($entryName in $entries) {
-                $entry = $archive.GetEntry($entryName)
-                if (-not $entry) {
-                    throw "官方 OPK 中缺少文件：$entryName"
-                }
-                $target = Join-Path $VersionPath ($entryName.Replace("/", "\"))
-                $targetParent = Split-Path -Parent $target
-                New-Item -ItemType Directory -Path $targetParent -Force | Out-Null
-                $input = $entry.Open()
-                $output = [IO.File]::Create($target)
-                try {
-                    $input.CopyTo($output)
-                }
-                finally {
-                    $output.Dispose()
-                    $input.Dispose()
-                }
-            }
-        }
-        finally {
-            $archive.Dispose()
-        }
-
-        foreach ($entryName in $entries) {
-            $source = Join-Path $VersionPath ($entryName.Replace("/", "\"))
-            $backup = Join-Path $backupRoot ($entryName.Replace("/", "\"))
-            New-Item -ItemType Directory -Path (Split-Path -Parent $backup) `
-                -Force | Out-Null
-            Copy-Item -LiteralPath $source -Destination $backup -Force
-        }
-        Write-LauncherLog "Official files restored from OPK and backed up"
-    }
-    elseif ($backupComplete) {
-        foreach ($entryName in $entries) {
-            $source = Join-Path $backupRoot ($entryName.Replace("/", "\"))
-            $target = Join-Path $VersionPath ($entryName.Replace("/", "\"))
-            New-Item -ItemType Directory -Path (Split-Path -Parent $target) `
-                -Force | Out-Null
-            Copy-Item -LiteralPath $source -Destination $target -Force
-        }
-        Write-LauncherLog "Official OPK unavailable; restored local official backup"
-    }
-    else {
-        $extraLocalizer = Join-Path $VersionPath "web\assets\js\alecaframe-zh-cn.js"
-        if (Test-Path -LiteralPath $extraLocalizer) {
-            throw "官方 OPK 缓存和本地备份都不存在。请在 Overwolf 中重新安装 AlecaFrame 后再启动中文版。"
-        }
-        foreach ($entryName in $entries) {
-            $source = Join-Path $VersionPath ($entryName.Replace("/", "\"))
-            if (-not (Test-Path -LiteralPath $source)) {
-                throw "AlecaFrame 官方文件不完整：$entryName。请重新安装 AlecaFrame。"
-            }
-            if ($entryName -like "web/*") {
-                $content = [IO.File]::ReadAllText($source, [Text.Encoding]::UTF8)
-                if ($content.Contains($scriptTag)) {
-                    throw "检测到旧汉化文件，但没有可用的官方备份。请重新安装 AlecaFrame。"
-                }
-            }
-            $backup = Join-Path $backupRoot ($entryName.Replace("/", "\"))
-            New-Item -ItemType Directory -Path (Split-Path -Parent $backup) `
-                -Force | Out-Null
-            Copy-Item -LiteralPath $source -Destination $backup -Force
-        }
-        Write-LauncherLog "Official OPK unavailable; created local official backup"
-    }
-
-    foreach ($extraScript in @("alecaframe-zh-cn.js", "alecaframe-zh-cn-items.js", "alecaframe-zh-cn-relic-ducats.js", "alecaframe-zh-cn-relic-ocr.js", "alecaframe-zh-cn-riven-ocr.js", "alecaframe-zh-cn-riven-overlay.js", "alecaframe-zh-cn-relic-overlay.js", "alecaframe-zh-cn-relic-recommendation.js", "alecaframe-zh-cn-relic-planner-cache.js", "alecaframe-zh-cn-inventory-price-sync.js", "alecaframe-zh-cn-inventory-images.js")) {
-        $extraLocalizer = Join-Path $VersionPath "web\assets\js\$extraScript"
-        if (Test-Path -LiteralPath $extraLocalizer) {
-            Remove-Item -LiteralPath $extraLocalizer -Force
-        }
-    }
+    return $Content
 }
 
 function Add-ChineseFiles {
@@ -272,179 +148,59 @@ function Add-ChineseFiles {
     )
     Assert-AppPath $VersionPath
     $webRoot = Join-Path $VersionPath "web"
+    $targetPages = @(Get-AlecaFrameTargetPages $VersionPath)
+    $sourceFiles = @($localizerSource, $itemTranslationsSource, $relicDucatsSource,
+        $relicOverlaySource, $relicRecommendationSource, $relicPlannerCacheSource,
+        $inventoryPriceSyncSource, $inventoryImagesSource)
+    if ($EnableRelicOcr) { $sourceFiles += @($relicOcrBridgeSource, $rivenOcrBridgeSource, $rivenOverlaySource) }
+    foreach ($source in $sourceFiles) {
+        if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "缺少汉化脚本：$source" }
+    }
+    $null = Get-AlecaFrameRelativePath $VersionPath 'web/assets/js'
+    $pageWrites = New-Object System.Collections.Generic.List[object]
     foreach ($relativePage in $targetPages) {
-        $target = Join-Path $webRoot $relativePage
-        $content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-        if (-not $content.Contains($scriptTag)) {
-            if ($content -notmatch "(?i)</body>") {
-                throw "页面缺少 </body>，无法注入：$relativePage"
-            }
-            $patched = [regex]::Replace(
-                $content,
-                "(?i)</body>",
-                "    $itemTranslationsScriptTag`r`n    $scriptTag`r`n</body>",
-                1
-            )
-            [IO.File]::WriteAllText($target, $patched, [Text.UTF8Encoding]::new($false))
+        $target = Get-AlecaFrameRelativePath $webRoot $relativePage
+        if (-not (Test-Path -LiteralPath $target -PathType Leaf)) {
+            throw "AlecaFrame 页面清单中的文件不存在：web/$relativePage。请重新安装 AlecaFrame。"
         }
-        if ($EnableRelicOcr -and $relativePage -eq "background.html") {
-            $content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-            if (-not $content.Contains($relicOcrBridgeScriptTag)) {
-                $patched = [regex]::Replace(
-                    $content,
-                    "(?i)</body>",
-                    "    $relicOcrBridgeScriptTag`r`n</body>",
-                    1
-                )
-                [IO.File]::WriteAllText($target, $patched, [Text.UTF8Encoding]::new($false))
-            }
-            $content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-            if (-not $content.Contains($rivenOcrBridgeScriptTag)) {
-                $patched = [regex]::Replace(
-                    $content,
-                    "(?i)</body>",
-                    "    $rivenOcrBridgeScriptTag`r`n</body>",
-                    1
-                )
-                [IO.File]::WriteAllText($target, $patched, [Text.UTF8Encoding]::new($false))
-            }
+        $original = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
+        $scripts = @('alecaframe-zh-cn-items.js', 'alecaframe-zh-cn.js')
+        if ($EnableRelicOcr -and $relativePage -eq 'background.html') {
+            $scripts += @('alecaframe-zh-cn-relic-ocr.js', 'alecaframe-zh-cn-riven-ocr.js')
         }
-        if ($EnableRelicOcr -and $relativePage -eq "rivenOverlay.html") {
-            $content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-            if (-not $content.Contains($rivenOverlayScriptTag)) {
-                $patched = [regex]::Replace(
-                    $content,
-                    "(?i)</body>",
-                    "    $rivenOverlayScriptTag`r`n</body>",
-                    1
-                )
-                [IO.File]::WriteAllText($target, $patched, [Text.UTF8Encoding]::new($false))
-            }
-            # Vue's original stat lists have no keys.  A short OCR frame can
-            # otherwise leave a previously rendered truncated row in the DOM
-            # after the canonical trait array has only three entries.
-            $content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-            $keyed = [regex]::Replace(
-                $content,
-                '(<div class="rivenDetailsStat (?:positive|negative)" v-for="stat in [^"]+")',
-                '$1 :key="stat.description"'
-            )
-            if ($keyed -ne $content) {
-                [IO.File]::WriteAllText($target, $keyed, [Text.UTF8Encoding]::new($false))
-            }
+        if ($EnableRelicOcr -and $relativePage -eq 'rivenOverlay.html') {
+            $scripts += 'alecaframe-zh-cn-riven-overlay.js'
         }
-        if ($relativePage -eq "relicRecommendation.html") {
-            $content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-            if (-not $content.Contains($relicRecommendationScriptTag)) {
-                $patched = [regex]::Replace(
-                    $content,
-                    "(?i)</body>",
-                    "    $relicRecommendationScriptTag`r`n</body>",
-                    1
-                )
-                [IO.File]::WriteAllText($target, $patched, [Text.UTF8Encoding]::new($false))
-            }
+        if ($relativePage -eq 'relicRecommendation.html') { $scripts += 'alecaframe-zh-cn-relic-recommendation.js' }
+        if ($relativePage -eq 'relicOverlay.html') {
+            $scripts += @('alecaframe-zh-cn-relic-ducats.js', 'alecaframe-zh-cn-relic-overlay.js')
         }
-        if ($relativePage -eq "relicOverlay.html") {
-            $content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-            if (-not $content.Contains($relicDucatsScriptTag)) {
-                $patched = [regex]::Replace(
-                    $content,
-                    "(?i)</body>",
-                    "    $relicDucatsScriptTag`r`n</body>",
-                    1
-                )
-                [IO.File]::WriteAllText($target, $patched, [Text.UTF8Encoding]::new($false))
-            }
-            $content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-            if (-not $content.Contains($relicOverlayScriptTag)) {
-                $patched = [regex]::Replace(
-                    $content,
-                    "(?i)</body>",
-                    "    $relicOverlayScriptTag`r`n</body>",
-                    1
-                )
-                [IO.File]::WriteAllText($target, $patched, [Text.UTF8Encoding]::new($false))
-            }
+        if ($relativePage -eq 'main.html') {
+            $scripts += @('alecaframe-zh-cn-relic-planner-cache.js', 'alecaframe-zh-cn-inventory-price-sync.js',
+                'alecaframe-zh-cn-inventory-images.js')
         }
-        if ($relativePage -eq "main.html") {
-            $content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-            if (-not $content.Contains($relicPlannerCacheScriptTag)) {
-                $patched = [regex]::Replace(
-                    $content,
-                    "(?i)</body>",
-                    "    $relicPlannerCacheScriptTag`r`n</body>",
-                    1
-                )
-                [IO.File]::WriteAllText($target, $patched, [Text.UTF8Encoding]::new($false))
-            }
-            $content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-            if (-not $content.Contains($inventoryPriceSyncScriptTag)) {
-                $patched = [regex]::Replace(
-                    $content,
-                    "(?i)</body>",
-                    "    $inventoryPriceSyncScriptTag`r`n</body>",
-                    1
-                )
-                [IO.File]::WriteAllText($target, $patched, [Text.UTF8Encoding]::new($false))
-            }
-            $content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-            if (-not $content.Contains($inventoryImagesScriptTag)) {
-                $patched = [regex]::Replace(
-                    $content,
-                    "(?i)</body>",
-                    "    $inventoryImagesScriptTag`r`n</body>",
-                    1
-                )
-                [IO.File]::WriteAllText($target, $patched, [Text.UTF8Encoding]::new($false))
-            }
+        $content = Add-AlecaFramePageScripts -Content $original -RelativePage $relativePage -Scripts $scripts
+        if ($EnableRelicOcr -and $relativePage -eq 'rivenOverlay.html') {
+            # Preserve existing Vue keys and make repeated injection idempotent.
+            $content = [regex]::Replace($content,
+                '(<div class="rivenDetailsStat (?:positive|negative)" v-for="stat in [^"]+")(?!\s+:key=)',
+                '$1 :key="stat.description"')
         }
+        $pageWrites.Add([pscustomobject]@{ Target = $target; Content = $content; Changed = $content -cne $original })
     }
-    Copy-Item -LiteralPath $localizerSource `
-        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn.js") `
-        -Force
-    Copy-Item -LiteralPath $itemTranslationsSource `
-        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-items.js") `
-        -Force
-    Copy-Item -LiteralPath $relicDucatsSource `
-        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-ducats.js") `
-        -Force
-    if ($EnableRelicOcr) {
-        Copy-Item -LiteralPath $relicOcrBridgeSource `
-            -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-ocr.js") `
-            -Force
-        Copy-Item -LiteralPath $rivenOcrBridgeSource `
-            -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-riven-ocr.js") `
-            -Force
-        Copy-Item -LiteralPath $rivenOverlaySource `
-            -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-riven-overlay.js") `
-            -Force
-    }
-    Copy-Item -LiteralPath $relicOverlaySource `
-        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-overlay.js") `
-        -Force
-    Copy-Item -LiteralPath $relicRecommendationSource `
-        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-recommendation.js") `
-        -Force
-    Copy-Item -LiteralPath $relicPlannerCacheSource `
-        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-planner-cache.js") `
-        -Force
-    Copy-Item -LiteralPath $inventoryPriceSyncSource `
-        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-inventory-price-sync.js") `
-        -Force
-    Copy-Item -LiteralPath $inventoryImagesSource `
-        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-inventory-images.js") `
-        -Force
 
     if ($EnableRelicOcr) {
     # The official reward window always executes this file. Patch only its
     # English-language failure branch so reward selection can consume the
     # short-lived Chinese OCR result. This is independent of the refinement
     # recommendation overlay and its planner cache.
-    $relicOverlayMain = Join-Path $webRoot "assets\js\relicOverlay\main.js"
+    $relicOverlayMain = Get-AlecaFrameRelativePath $VersionPath 'web/assets/js/relicOverlay/main.js'
     $mainContent = [IO.File]::ReadAllText($relicOverlayMain, [Text.Encoding]::UTF8)
     $helperMarker = "// ALECAFRAME_ZH_CN_REWARD_FALLBACK"
     if (-not $mainContent.Contains($helperMarker)) {
+        if ([regex]::Matches($mainContent, 'var relicWindowInitialized = false;').Count -ne 1) {
+            throw '奖励窗口初始化结构已变化，未应用中文奖励回退补丁。'
+        }
         $helper = @'
 // ALECAFRAME_ZH_CN_REWARD_FALLBACK
 var alecaFrameZhCnRewardResultKey = "__alecaframeZhCnRewardOverlayResult";
@@ -568,16 +324,14 @@ function alecaFrameZhCnStartRewardFallback() {
                             }
 '@
         $failurePattern = '(?ms)^\s*console\.log\("Failed to get relic data: " \+ data\);\s*relicsApp\.error = true;\s*relicsApp\.errorMessage = data;'
-        if (-not [regex]::IsMatch($mainContent, $failurePattern)) {
+        if ([regex]::Matches($mainContent, $failurePattern).Count -ne 1) {
             throw "奖励窗口主脚本版本不匹配，未应用中文奖励回退补丁。"
         }
         $mainContent = [regex]::Replace($mainContent, $failurePattern, $replacementBranch, 1)
-        [IO.File]::WriteAllText($relicOverlayMain, $mainContent, [Text.UTF8Encoding]::new($false))
     }
     # Keep the injected reward helper up to date across launcher runs. The
     # first implementation only inserted once, which left deployed users on
     # its old 2.5-second capture path even after source fixes were made.
-    $mainContent = [IO.File]::ReadAllText($relicOverlayMain, [Text.Encoding]::UTF8)
     $mainContent = $mainContent.Replace('var alecaFrameZhCnRewardCaptureEndpoint = "http://127.0.0.1:38147/capture";', 'var alecaFrameZhCnRewardCaptureEndpoint = "http://127.0.0.1:38147/capture-reward";')
     # The reward cards use English names internally for price and inventory
     # queries. Render only the Chinese display name in this overlay; the main
@@ -672,11 +426,57 @@ function alecaFrameZhCnRequestRewardCapture() {
         $mainContent = $mainContent.Replace('            completed = true;', "            completed = true;`r`n            alecaFrameZhCnRewardFallbackCompleted = true;`r`n            alecaFrameZhCnRewardFallbackInProgress = false;")
         $mainContent = $mainContent.Replace('            clearInterval(timer);`r`n            relicsApp.loading = false;', "            clearInterval(timer);`r`n            alecaFrameZhCnRewardFallbackInProgress = false;`r`n            relicsApp.loading = false;")
     }
-    $slowRewardStart = "    setTimeout(() => {`r`n        sendPage(`"relic`");`r`n    }, 2500);"
+    $slowRewardStart = '(?m)^[ \t]*setTimeout\(\(\) => \{\s*sendPage\("relic"\);\s*\}, 2500\);'
     $fastRewardStart = "    // Start Chinese reward recognition immediately; native English OCR may fail later.`r`n    alecaFrameZhCnStartRewardFallback();`r`n    setTimeout(() => {`r`n        sendPage(`"relic`");`r`n    }, 300);"
-    $mainContent = $mainContent.Replace($slowRewardStart, $fastRewardStart)
-    [IO.File]::WriteAllText($relicOverlayMain, $mainContent, [Text.UTF8Encoding]::new($false))
+    $mainContent = [regex]::Replace($mainContent, $slowRewardStart, $fastRewardStart)
+    if ([regex]::Matches($mainContent, 'function alecaFrameZhCnStartRewardFallback\(').Count -ne 1 -or
+        -not $mainContent.Contains('    alecaFrameZhCnStartRewardFallback();')) {
+        throw '奖励窗口中文回退入口未能完整绑定，未修改官方文件。'
     }
+    }
+    # All page and native-hook compatibility checks above complete before any
+    # official file is changed. The shared restore routine provides rollback.
+    foreach ($page in $pageWrites) {
+        if ($page.Changed) { [IO.File]::WriteAllText($page.Target, $page.Content, [Text.UTF8Encoding]::new($false)) }
+    }
+    if ($EnableRelicOcr) {
+        [IO.File]::WriteAllText($relicOverlayMain, $mainContent, [Text.UTF8Encoding]::new($false))
+    }
+    Copy-Item -LiteralPath $localizerSource `
+        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn.js") `
+        -Force
+    Copy-Item -LiteralPath $itemTranslationsSource `
+        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-items.js") `
+        -Force
+    Copy-Item -LiteralPath $relicDucatsSource `
+        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-ducats.js") `
+        -Force
+    if ($EnableRelicOcr) {
+        Copy-Item -LiteralPath $relicOcrBridgeSource `
+            -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-ocr.js") `
+            -Force
+        Copy-Item -LiteralPath $rivenOcrBridgeSource `
+            -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-riven-ocr.js") `
+            -Force
+        Copy-Item -LiteralPath $rivenOverlaySource `
+            -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-riven-overlay.js") `
+            -Force
+    }
+    Copy-Item -LiteralPath $relicOverlaySource `
+        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-overlay.js") `
+        -Force
+    Copy-Item -LiteralPath $relicRecommendationSource `
+        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-recommendation.js") `
+        -Force
+    Copy-Item -LiteralPath $relicPlannerCacheSource `
+        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-planner-cache.js") `
+        -Force
+    Copy-Item -LiteralPath $inventoryPriceSyncSource `
+        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-inventory-price-sync.js") `
+        -Force
+    Copy-Item -LiteralPath $inventoryImagesSource `
+        -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-inventory-images.js") `
+        -Force
 
 }
 
