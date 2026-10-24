@@ -1285,7 +1285,44 @@
     "When you join a squad, you are responsible for making sure you can complete the tasks listed in the title/requirements. Multiple offences will result in a ban. If you are close to meeting the requirements, it is allowed to join the squad and ask in the chat if everyone is ok with your situation.": "加入小队时，你应确保自己能完成标题或要求中列出的任务。多次违规会导致封禁。如果接近要求，可以先加入并在聊天中征求所有成员同意。"
   });
 
+  Object.assign(translations, {
+    "Planet": "星球",
+    "Any attribute": "任意词条",
+    "Positive": "正面词条",
+    "On this Riven": "已有词条",
+    "Missing core": "缺少核心词条",
+    "Missing core attribute": "缺少核心词条",
+    "Core positives": "核心正面词条",
+    "Recommended positives": "推荐正面词条",
+    "Other positives": "其他正面词条",
+    "Preferred negatives": "推荐负面词条",
+    "Current grade": "当前评级",
+    "Recommended attributes": "推荐词条",
+    "Perfect": "完美",
+    "Potential": "有潜力",
+    "Poor": "较差",
+    "Neutral": "中性",
+    "Not graded": "未评级",
+    "Unknown Riven": "未知裂罅",
+    "Riven mod": "裂罅 MOD",
+    "No modifier details available": "暂无词条详情",
+    "Include all of these": "需包含以下所有词条",
+    "Fill remaining positive slots from these.": "从以下词条中选择其余正面词条。",
+    "Choose your positive attributes from these.": "从以下词条中选择正面词条。",
+    "No recommended positive combination is available for this weapon": "此武器暂无推荐正面词条组合",
+    "If the Riven has a negative attribute, one of these is preferred": "若裂罅包含负面词条，优先选择以下词条之一",
+    "Use any one of these positive-attribute combinations for this weapon.": "此武器可选用以下任一正面词条组合。",
+    "Use these recommendations as a guide for this weapon.": "可参考以下推荐选择此武器的词条。",
+    "Only show rolls that include this attribute": "仅显示包含此词条的裂罅"
+  });
+
   const dynamicRules = [
+    [/^Positive (\d+)$/i, "正面词条 $1"],
+    [/^Combination (\d+)$/i, "组合 $1"],
+    [/^Recommended attribute combination: (.+)$/i, (_, grade) => `推荐词条组合：${translateString(grade)}`],
+    [/^Unsupported: (.+)$/i, (_, trait) => `不支持的词条：${translateRivenTraitText(trait)}`],
+    [/^Disposition ([\d.,]+)$/i, "共鸣系数 $1"],
+    [/^Rank (\d+|—)\s*\/\s*(\d+|—)$/i, "等级 $1 / $2"],
     [/^Wave (\d+)$/i, "第 $1 波"],
     [/^Rotation (\d+)$/i, "第 $1 轮"],
     [/^(Wave|Rotation) (\d+)\s*[·,]\s*(.+)$/i, (_, kind, index, suffix) => `第 ${index} ${kind.toLowerCase() === "wave" ? "波" : "轮"} · ${translateString(suffix)}`],
@@ -1368,6 +1405,16 @@
   const playerIdentitySelector = ".quoteIdentity > strong, .foundryPlayerName, .accountPanelHeader > strong, .tradeUsername, .statsActivityTrade > header > strong > span, #vueContainer > .title > span";
   const displayOnlyItemNameSelector = ".inventoryObject:not(.relicPlanner) .inventoryItemName";
   const chineseMarketSuggestionPrefix = "__alecaframe_zh_market__:";
+  const locationTranslations = {
+    "Mercury": "水星", "Venus": "金星", "Earth": "地球", "Mars": "火星",
+    "Jupiter": "木星", "Saturn": "土星", "Uranus": "天王星", "Neptune": "海王星",
+    "Pluto": "冥王星", "Ceres": "谷神星", "Europa": "欧罗巴", "Eris": "阋神星",
+    "Sedna": "赛德娜", "Phobos": "火卫一", "Deimos": "火卫二", "Lua": "月球",
+    "Void": "虚空", "Kuva Fortress": "赤毒要塞", "Zariman": "扎里曼"
+  };
+  // Scope display replacements to location controls; planet names can also be player names.
+  const locationSelector = ".arbitrationHeroNode, .arbitrationSlotIdentity > span, .arbitrationNodeChoices strong, .arbitrationMiniSlot strong, .arbitrationTruncate, .arbitrationChip, #tabArbitrations .mainFilterGroup > div > button, #tabArbitrations .mainFilterChip, .worldArbitrationMission, .worldMission > span, .arbRunRowIdentity > strong, .arbRunReportHeading h3, .arbRunLibraryHeading > .arbRunCaptureState, .arbRunDeleteDetails > strong, .arbRunExpanded > .arbitrationFootnote";
+  const rivenTraitSelector = ".rivenTrait, .rivenDetailsStatText, .similarRivenAttr, .goodAttrMandatory, .goodAttrOptional, .badAttrItem, .attrName, .rivenFinderAttrSelectAttr option, .rivenFinderAttrSelectAttr .mainOrderingTrigger, .rivenAttributeSlot option, .rivenAttributeSlot .mainOrderingTrigger, .rivenModifier, .rivenStatDescription > strong, .rivenAttrName, .rivenUnsupportedAttributes > span, .rivenAttributeMarketRow > span:first-child";
   const rivenTraitTranslations = [
     ["Chance to get combo", "额外连击数几率"],
     ["Chance for extra combo", "额外连击数几率"],
@@ -1394,6 +1441,8 @@
     ["Status Effect Duration", "触发时间"],
     ["Status Duration", "触发时间"],
     ["Status Damage", "异常状态伤害"],
+    ["Slam Attack Damage", "震地伤害"],
+    ["Slam Damage", "震地伤害"],
     ["Heavy Attack Efficiency", "重击效率"],
     ["Combo Duration", "连击持续时间"],
     ["Projectile Flight Speed", "投射物速度"],
@@ -1476,6 +1525,15 @@
     ["Range", "攻击范围"],
     ["Zoom", "变焦"]
   ];
+  const rivenTraitDictionary = Object.fromEntries(rivenTraitTranslations.map(([english, chinese]) => [english.toLowerCase(), chinese]));
+  const locationDictionary = Object.fromEntries(Object.entries(locationTranslations).map(([english, chinese]) => [english.toLowerCase(), chinese]));
+  function translatedPhrasePattern(dictionary) {
+    const phrases = Object.keys(dictionary).sort((a, b) => b.length - a.length)
+      .map(phrase => phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/ +/g, "\\s+"));
+    return new RegExp("\\b(?:" + phrases.join("|") + ")(?![A-Za-z0-9_])", "gi");
+  }
+  const rivenTraitPattern = translatedPhrasePattern(rivenTraitDictionary);
+  const locationPattern = translatedPhrasePattern(locationDictionary);
 
   function isMarketPanelElement(element) {
     return element instanceof Element && Boolean(element.closest(marketPanelSelector));
@@ -2052,7 +2110,8 @@
     for (const attribute of ["placeholder", "title", "alt", "aria-label"]) {
       if (element.hasAttribute(attribute)) {
         const current = element.getAttribute(attribute);
-        const translated = translateString(current);
+        const translated = translateString(translateLocationText(
+          isRivenTraitElement(element) ? translateRivenTraitText(current) : current, element));
         if (translated !== current) element.setAttribute(attribute, translated);
       }
     }
@@ -2085,15 +2144,31 @@
   function translateRivenTraitText(value) {
     if (!value || !/[A-Za-z]/.test(value)) return value;
     if (value.includes("{{") || value.includes("}}")) return value;
-    let translated = value;
-    for (const [english, chinese] of rivenTraitTranslations) translated = translated.replaceAll(english, chinese);
-    return translated;
+    return value.replace(rivenTraitPattern, english => rivenTraitDictionary[english.toLowerCase().replace(/\s+/g, " ")]);
+  }
+
+  function isRivenTraitElement(element) {
+    if (element.closest(rivenTraitSelector)) return true;
+    // The native dropdown menu is rendered into a portal outside its Riven slot.
+    return Boolean(element.closest(".mainOrderingMenu") && document.querySelector(
+      ".rivenAttributeSlot .mainOrderingOpen select, .rivenFinderAttrSelectAttr .mainOrderingOpen select"));
   }
 
   function translateRivenTraitNode(node) {
     if (node.nodeType !== Node.TEXT_NODE || !node.parentElement) return;
-    if (!node.parentElement.closest(".rivenTrait, .rivenDetailsStatText, .similarRivenAttr, .goodAttrMandatory, .goodAttrOptional, .badAttrItem, .attrName, .rivenFinderAttrSelectAttr option")) return;
+    if (!isRivenTraitElement(node.parentElement)) return;
     const translated = translateRivenTraitText(node.nodeValue);
+    if (translated !== node.nodeValue) node.nodeValue = translated;
+  }
+
+  function translateLocationText(value, element) {
+    if (!value || value.includes("{{") || value.includes("}}") || !element.closest(locationSelector)) return value;
+    return value.replace(locationPattern, english => locationDictionary[english.toLowerCase().replace(/\s+/g, " ")]);
+  }
+
+  function translateLocationNode(node) {
+    if (node.nodeType !== Node.TEXT_NODE || !node.parentElement) return;
+    const translated = translateLocationText(node.nodeValue, node.parentElement);
     if (translated !== node.nodeValue) node.nodeValue = translated;
   }
 
@@ -2220,6 +2295,7 @@
         continue;
       }
       if (node.parentElement?.closest(marketItemNameSelector + ', ' + playerIdentitySelector + ', script, style, noscript, code, pre, textarea')) continue;
+      translateRivenTraitNode(node);
       const translated = translateString(node.nodeValue);
       if (translated !== node.nodeValue) node.nodeValue = translated;
     }
@@ -2394,6 +2470,7 @@
       }
       if (isDisplayOnlyItemName(parent) || /^(SCRIPT|STYLE|NOSCRIPT|CODE|PRE|TEXTAREA)$/i.test(parent.tagName)) return;
       translateRivenTraitNode(root);
+      translateLocationNode(root);
       const translated = translateString(root.nodeValue);
       if (translated !== root.nodeValue) root.nodeValue = translated;
       translateRivenChallengeNode(root);
@@ -2413,6 +2490,7 @@
         const parent = node.parentElement;
         if (!parent || parent.closest(playerIdentitySelector) || isMarketPanelElement(parent) || isDisplayOnlyItemName(parent) || /^(SCRIPT|STYLE|NOSCRIPT|CODE|PRE|TEXTAREA)$/i.test(parent.tagName)) continue;
         translateRivenTraitNode(node);
+        translateLocationNode(node);
         const translated = translateString(node.nodeValue);
         if (translated !== node.nodeValue) node.nodeValue = translated;
         translateRivenChallengeNode(node);
