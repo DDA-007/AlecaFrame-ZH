@@ -572,12 +572,13 @@ function Test-AlecaFrameInitializationLog {
 }
 
 function Wait-AlecaFrameInitialization {
-    param([datetime]$StartedAt, [int]$TimeoutSeconds = 90)
+    param([datetime]$StartedAt, [int]$TimeoutSeconds = 90, [string]$Version)
     $backgroundLog = Join-Path $env:LOCALAPPDATA 'Overwolf\Log\Apps\AlecaFrame\BackGround.html.log'
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     Write-Output '正在等待 AlecaFrame 完成数据初始化……'
     while ((Get-Date) -lt $deadline) {
         Assert-AlecaFrameIntegrity -StartedAt $StartedAt
+        if ($Version) { Assert-AlecaFrameSelectedVersion -Version $Version -StartedAt $StartedAt }
         if (Test-AlecaFrameInitializationLog -LogPath $backgroundLog -StartedAt $StartedAt) {
             Write-LauncherLog 'AlecaFrame native initialization completed'
             return
@@ -599,30 +600,136 @@ function Get-AlecaFrameRenderer {
         Select-Object -First 1
 }
 
-function Wait-OverwolfExtensionReady {
-    param([datetime]$StartedAt)
-
-    # Overwolf can move or delay its trace logs after a Windows restart. The
-    # launcher below also retries the actual app launch, so waiting only for a
-    # specific trace line turns a slow cold start into a false failure.
-    $traceRoot = Join-Path $env:LOCALAPPDATA "Overwolf\Log"
-    for ($attempt = 0; $attempt -lt 30; $attempt++) {
-        Start-Sleep -Milliseconds 500
-        $trace = Get-ChildItem -LiteralPath $traceRoot -Filter "Trace_*.log" -File `
-            -ErrorAction SilentlyContinue |
-            Where-Object { $_.LastWriteTime -ge $StartedAt.AddSeconds(-2) } |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -First 1
-        if ($trace) {
-            $tail = Get-Content -LiteralPath $trace.FullName -Tail 500 `
-                -ErrorAction SilentlyContinue
-            if ($tail -match "Loading extension '$appId") {
-                Start-Sleep -Seconds 2
-                return
+function Get-AlecaFrameStartupVersionState {
+    param(
+        [datetime]$StartedAt,
+        [string]$TraceRoot = (Join-Path $env:LOCALAPPDATA 'Overwolf\Log'),
+        [string]$BackgroundLog = (Join-Path $TraceRoot 'Apps\AlecaFrame\BackGround.html.log')
+    )
+    $loaded = $null
+    $update = $null
+    $active = $null
+    $escapedId = [regex]::Escape($appId)
+    $traces = Get-ChildItem -LiteralPath $TraceRoot -Filter 'Trace_*.log' -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.LastWriteTime -ge $StartedAt } | Sort-Object LastWriteTime -Descending | Select-Object -First 3
+    foreach ($trace in $traces) {
+        foreach ($line in (Get-Content -LiteralPath $trace.FullName -Tail 1200 -Encoding UTF8 -ErrorAction SilentlyContinue)) {
+            if ($line -notmatch $escapedId -or $line.Length -lt 23) { continue }
+            $eventAt = [datetime]::MinValue
+            if (-not [datetime]::TryParseExact($line.Substring(0, 23), 'yyyy-MM-dd HH:mm:ss,fff',
+                [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None,
+                [ref]$eventAt) -or $eventAt -lt $StartedAt) { continue }
+            if ($line -match ("Loading extension '" + $escapedId + " - AlecaFrame' (\d+(?:\.\d+){1,3})(?:\s|$)")) {
+                if (-not $loaded -or $eventAt -gt $loaded.At) { $loaded = [pscustomobject]@{ Version = $Matches[1]; At = $eventAt } }
+            }
+            elseif ($line -match ("Updating AlecaFrame \(" + $escapedId + '\) from \d+(?:\.\d+){1,3} to (\d+(?:\.\d+){1,3})\.')) {
+                if (-not $update -or $eventAt -gt $update.At) { $update = [pscustomobject]@{ Version = $Matches[1]; At = $eventAt } }
             }
         }
     }
-    Write-LauncherLog "Overwolf extension trace was not available; continuing with renderer-based readiness check"
+    if (Test-Path -LiteralPath $BackgroundLog) {
+        foreach ($line in (Get-Content -LiteralPath $BackgroundLog -Tail 240 -Encoding UTF8 -ErrorAction SilentlyContinue)) {
+            if ($line -notmatch 'Extension version: (\d+(?:\.\d+){1,3})(?:\s|$)' -or $line.Length -lt 23) { continue }
+            $version = $Matches[1]
+            $eventAt = [datetime]::MinValue
+            if ([datetime]::TryParseExact($line.Substring(0, 23), 'yyyy-MM-dd HH:mm:ss,fff',
+                [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None,
+                [ref]$eventAt) -and $eventAt -ge $StartedAt -and (-not $active -or $eventAt -gt $active.At)) {
+                $active = [pscustomobject]@{ Version = $version; At = $eventAt }
+            }
+        }
+    }
+    $pending = $update -and (-not $loaded -or [version]$loaded.Version -lt [version]$update.Version)
+    $lastChange = $StartedAt
+    foreach ($statusEvent in @($loaded, $update)) { if ($statusEvent -and $statusEvent.At -gt $lastChange) { $lastChange = $statusEvent.At } }
+    [pscustomobject]@{
+        LoadedVersion = if ($loaded) { $loaded.Version } else { $null }
+        ActiveVersion = if ($active) { $active.Version } else { $null }
+        ActiveAt = if ($active) { $active.At } else { $StartedAt }
+        UpdateVersion = if ($update) { $update.Version } else { $null }
+        PendingUpdate = [bool]$pending
+        LastChangeAt = $lastChange
+    }
+}
+
+function Wait-OverwolfExtensionReady {
+    param([datetime]$StartedAt, [int]$TimeoutSeconds = 120)
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $reportedUpdate = $false
+    do {
+        Start-Sleep -Milliseconds 500
+        $state = Get-AlecaFrameStartupVersionState -StartedAt $StartedAt
+        if ($state.PendingUpdate) {
+            if (-not $reportedUpdate) {
+                Write-Output '检测到 AlecaFrame 自动更新，正在等待更新完成……'
+                Write-LauncherLog "Waiting for extension update to $($state.UpdateVersion)"
+                $reportedUpdate = $true
+            }
+            continue
+        }
+        $latest = Get-LatestVersionDirectory -AllowMissing
+        if ($latest -and $state.LoadedVersion -eq $latest.Name -and (Get-Date) -ge $state.LastChangeAt.AddSeconds(3)) { return }
+        # Missing trace logs must not turn an otherwise healthy cold start into
+        # a hard failure. The official renderer/version checks below still run.
+        if (-not $state.LoadedVersion -and (Get-Date) -ge $StartedAt.AddSeconds(15)) {
+            Write-LauncherLog 'Extension trace unavailable; checking the official renderer and native initialization'
+            return
+        }
+    } while ((Get-Date) -lt $deadline)
+    throw 'AlecaFrame 自动更新尚未完成，暂未修改汉化文件。请等待官方更新完成后重试。'
+}
+
+function Wait-AlecaFrameOfficialVersionReady {
+    param([datetime]$StartedAt, [int]$TimeoutSeconds = 120)
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $backgroundLog = Join-Path $env:LOCALAPPDATA 'Overwolf\Log\Apps\AlecaFrame\BackGround.html.log'
+    $stableKey = ''
+    $stableAt = Get-Date
+    do {
+        Assert-AlecaFrameIntegrity -StartedAt $StartedAt
+        $latest = Get-LatestVersionDirectory -AllowMissing
+        $state = Get-AlecaFrameStartupVersionState -StartedAt $StartedAt
+        $renderer = Get-AlecaFrameRenderer
+        $versionMatches = $latest -and -not $state.PendingUpdate -and
+            (-not $state.LoadedVersion -or $state.LoadedVersion -eq $latest.Name) -and
+            (-not $state.ActiveVersion -or $state.ActiveVersion -eq $latest.Name)
+        $nativeReady = $versionMatches -and $renderer -and
+            (Test-AlecaFrameInitializationLog -LogPath $backgroundLog -StartedAt $state.ActiveAt)
+        $key = if ($nativeReady) { "$($latest.FullName)|$($renderer.ProcessId)|$($state.ActiveAt.Ticks)" } else { '' }
+        if (-not $key -or $key -ne $stableKey) { $stableAt = Get-Date; $stableKey = $key }
+        if ($key -and (Get-Date) -ge $stableAt.AddSeconds(3)) {
+            Write-LauncherLog "Official AlecaFrame ready on version $($latest.Name), renderer $($renderer.ProcessId)"
+            return $latest
+        }
+        if (-not (Get-Process -Name 'Overwolf' -ErrorAction SilentlyContinue)) { throw 'Overwolf 已退出，版本确认未完成。' }
+        Start-Sleep -Milliseconds 500
+    } while ((Get-Date) -lt $deadline)
+    throw 'AlecaFrame 更新或数据初始化尚未完成，无法确认当前运行版本；未向旧版本写入汉化。'
+}
+
+function Assert-AlecaFrameSelectedVersion {
+    param([string]$Version, [datetime]$StartedAt)
+    $state = Get-AlecaFrameStartupVersionState -StartedAt $StartedAt
+    $latest = Get-LatestVersionDirectory -AllowMissing
+    if ($state.PendingUpdate -or -not $latest -or $latest.Name -ne $Version -or
+        ($state.LoadedVersion -and $state.LoadedVersion -ne $Version)) {
+        $versionChangeException = New-Object InvalidOperationException('AlecaFrame 在启动过程中发生更新，正在重新选择汉化版本。')
+        $versionChangeException.Data['AlecaFrameVersionChanged'] = $true
+        throw $versionChangeException
+    }
+}
+
+function Test-AlecaFrameChineseLoadLog {
+    param([string]$LogPath, [datetime]$StartedAt)
+    if (-not (Test-Path -LiteralPath $LogPath)) { return $false }
+    foreach ($line in (Get-Content -LiteralPath $LogPath -Tail 120 -Encoding UTF8 -ErrorAction SilentlyContinue)) {
+        if ($line -notmatch '\[AlecaFrame 中文补丁\] 已加载' -or $line.Length -lt 23) { continue }
+        $loggedAt = [datetime]::MinValue
+        if ([datetime]::TryParseExact($line.Substring(0, 23), 'yyyy-MM-dd HH:mm:ss,fff',
+            [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None,
+            [ref]$loggedAt) -and $loggedAt -ge $StartedAt) { return $true }
+    }
+    return $false
 }
 
 function Start-AlecaFrameAndWait {
@@ -635,9 +742,11 @@ function Start-AlecaFrameAndWait {
     $nextLaunch = Get-Date
     do {
         Assert-AlecaFrameIntegrity -StartedAt $StartedAt
+        $renderer = Get-AlecaFrameRenderer
+        if ($renderer) { return $renderer }
         if ((Get-Date) -ge $nextLaunch) {
             Start-Process -FilePath $launcherExe `
-                -ArgumentList "-launchapp", $appId, "-from-desktop"
+                -ArgumentList "-launchapp", $appId, "-from-desktop" -WindowStyle Hidden
             $nextLaunch = (Get-Date).AddSeconds(3)
         }
         Start-Sleep -Milliseconds 500
@@ -727,51 +836,71 @@ try {
     $testSessionStarted = [bool]$validationReportOnly
     Wait-OverwolfExtensionReady -StartedAt $overwolfStartedAt
 
-    # First launch uses untouched official files so Overwolf can complete its normal
-    # integrity check and initialize AlecaFrame.
-    $originalRenderer = Start-AlecaFrameAndWait -TimeoutSeconds 120 -StartedAt $overwolfStartedAt
-    Wait-AlecaFrameInitialization -StartedAt $overwolfStartedAt
-    Start-Sleep -Seconds 4
-    Assert-AlecaFrameIntegrity -StartedAt $overwolfStartedAt
-
-    $patchTime = Get-Date
-    Add-ChineseFiles -VersionPath $versionDirectory.FullName -EnableRelicOcr $enableRelicOcr
-
-    # Reload only AlecaFrame's renderer so the rest of Overwolf remains running.
-    Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-        Where-Object {
-            $_.Name -eq "OverwolfBrowser.exe" -and
-            $_.CommandLine -match "AlecaFrame"
-        } |
-        ForEach-Object {
-            Stop-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
-        }
-    Start-Sleep -Seconds 3
-
-    $null = Start-AlecaFrameAndWait -TimeoutSeconds 120 -StartedAt $patchTime
-
-    $loaded = $false
-    $mainLog = Join-Path $env:LOCALAPPDATA "Overwolf\Log\Apps\AlecaFrame\MainWindow.html.log"
-    for ($attempt = 0; $attempt -lt 120; $attempt++) {
-        Start-Sleep -Milliseconds 500
-        Assert-AlecaFrameIntegrity -StartedAt $patchTime
-        if (Test-Path -LiteralPath $mainLog) {
-            $logItem = Get-Item -LiteralPath $mainLog
-            if ($logItem.LastWriteTime -ge $patchTime.AddSeconds(-2)) {
-                $tail = Get-Content -LiteralPath $mainLog -Tail 40 -ErrorAction SilentlyContinue
-                if ($tail -match "\[AlecaFrame 中文补丁\] 已加载") {
-                    $loaded = $true
-                    break
-                }
+    # The official warm-up may install a newer version than the directory found
+    # before Overwolf started. Select the version only after that update settles.
+    $startupComplete = $false
+    for ($launchAttempt = 1; $launchAttempt -le 3; $launchAttempt++) {
+        $patchWritten = $false
+        try {
+            $null = Start-AlecaFrameAndWait -TimeoutSeconds 120 -StartedAt $overwolfStartedAt
+            $readyVersion = Wait-AlecaFrameOfficialVersionReady -StartedAt $overwolfStartedAt
+            if ($versionDirectory.Name -ne $readyVersion.Name) {
+                Write-LauncherLog "AlecaFrame updated during startup: $($versionDirectory.Name) -> $($readyVersion.Name); selecting the running version"
             }
+            $versionDirectory = $readyVersion
+            Assert-AlecaFrameSelectedVersion -Version $versionDirectory.Name -StartedAt $overwolfStartedAt
+            # Every newly selected version needs its own same-version backup.
+            Restore-OfficialFiles -Version $versionDirectory.Name -VersionPath $versionDirectory.FullName
+            $patchTime = Get-Date
+            $patchWritten = $true
+            Add-ChineseFiles -VersionPath $versionDirectory.FullName -EnableRelicOcr $enableRelicOcr
+            Write-LauncherLog "Chinese scripts applied to AlecaFrame $($versionDirectory.Name)"
+
+            # Reload only AlecaFrame, keeping Overwolf and the session flags alive.
+            Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+                Where-Object {
+                    $_.Name -eq "OverwolfBrowser.exe" -and
+                    $_.CommandLine -match "AlecaFrame"
+                } |
+                ForEach-Object { Stop-Process -Id $_.ProcessId -ErrorAction SilentlyContinue }
+            Start-Sleep -Seconds 3
+            Assert-AlecaFrameSelectedVersion -Version $versionDirectory.Name -StartedAt $overwolfStartedAt
+            $null = Start-AlecaFrameAndWait -TimeoutSeconds 120 -StartedAt $patchTime
+
+            $loaded = $false
+            $mainLog = Join-Path $env:LOCALAPPDATA 'Overwolf\Log\Apps\AlecaFrame\MainWindow.html.log'
+            for ($attempt = 0; $attempt -lt 120; $attempt++) {
+                Start-Sleep -Milliseconds 500
+                Assert-AlecaFrameIntegrity -StartedAt $patchTime
+                Assert-AlecaFrameSelectedVersion -Version $versionDirectory.Name -StartedAt $overwolfStartedAt
+                if (Test-AlecaFrameChineseLoadLog -LogPath $mainLog -StartedAt $patchTime) { $loaded = $true; break }
+            }
+            if (-not $loaded) { throw "中文脚本未能加载，请查看 $stateRoot\launcher.log" }
+            Wait-AlecaFrameInitialization -StartedAt $patchTime -Version $versionDirectory.Name
+            Assert-AlecaFrameSelectedVersion -Version $versionDirectory.Name -StartedAt $overwolfStartedAt
+            $startupComplete = $true
+            break
+        }
+        catch {
+            $startupFailure = $_
+            $versionChanged = [bool]$startupFailure.Exception.Data['AlecaFrameVersionChanged']
+            if (-not $versionChanged) {
+                # Updating may remove a page while patch planning is reading it.
+                # Retry only when a version change is independently confirmed.
+                try { Assert-AlecaFrameSelectedVersion -Version $versionDirectory.Name -StartedAt $overwolfStartedAt }
+                catch { $versionChanged = [bool]$_.Exception.Data['AlecaFrameVersionChanged'] }
+            }
+            if (-not $versionChanged) { throw $startupFailure }
+            Write-LauncherLog "Version changed while loading Chinese UI; retry $launchAttempt of 3"
+            if ($patchWritten -and (Test-Path -LiteralPath (Join-Path $versionDirectory.FullName 'manifest.json'))) {
+                Restore-OfficialFiles -Version $versionDirectory.Name -VersionPath $versionDirectory.FullName
+            }
+            if ($launchAttempt -eq 3) { throw 'AlecaFrame 在启动过程中连续更新，暂未完成汉化。请等待官方更新稳定后重试。' }
+            Wait-OverwolfExtensionReady -StartedAt $overwolfStartedAt
         }
     }
-    if (-not $loaded) {
-        throw "中文脚本未能加载，请查看 $stateRoot\launcher.log"
-    }
-
+    if (-not $startupComplete) { throw 'AlecaFrame 中文启动未完成。' }
     Write-LauncherLog "Chinese UI loaded successfully"
-    Wait-AlecaFrameInitialization -StartedAt $patchTime
     if ($TestValidationReportOnly) {
         Write-Output "SESSION_READY: translation load marker found; 45 seconds for visual inspection, then automatic exit and restore."
         Start-Sleep -Seconds 45
@@ -816,7 +945,10 @@ finally {
             Start-Sleep -Seconds 3
         }
         finally {
-            Restore-OfficialFiles -Version $versionDirectory.Name -VersionPath $versionDirectory.FullName
+            if (Test-Path -LiteralPath (Join-Path $versionDirectory.FullName 'manifest.json')) {
+                Restore-OfficialFiles -Version $versionDirectory.Name -VersionPath $versionDirectory.FullName
+            }
+            else { Write-LauncherLog "Official update removed version $($versionDirectory.Name); no old version recreated" }
         }
         Write-LauncherLog "Experimental session ended; official files restored"
         Write-Output "SESSION_RESTORED: experimental Overwolf session ended and official files restored."
