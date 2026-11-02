@@ -30,5 +30,11 @@ if ($settings.relicOcr -isnot [pscustomobject]) {
 $settings.relicOcr | Add-Member -MemberType NoteProperty -Name enabled -Value $Enabled -Force
 
 $settings | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $settingsPath -Encoding UTF8
+if (-not $Enabled) {
+    . (Join-Path $PSScriptRoot 'AlecaFrame-ZH-Compatibility.ps1')
+    Stop-AlecaFrameOcrHelper -ProjectRoot $PSScriptRoot
+}
 $state = if ($Enabled) { "启用" } else { "关闭" }
-Write-Host "中文遗物 OCR 已${state}。请完全退出 Overwolf，再通过 AlecaFrame-ZH 启动，设置才会生效。" -ForegroundColor Green
+Write-Host "中文遗物 OCR 已${state}。" -ForegroundColor Green
+if ($Enabled) { Write-Host '请完全退出 Overwolf，再通过 AlecaFrame-ZH 启动，使 OCR 生效。' -ForegroundColor Green }
+else { Write-Host '当前项目的 OCR 工作进程已释放；重新启用后请重启中文入口。' -ForegroundColor Green }

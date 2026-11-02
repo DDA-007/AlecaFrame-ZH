@@ -5,6 +5,7 @@ $extensionsRoot = Join-Path $env:LOCALAPPDATA "Overwolf\Extensions\$appId"
 $packagesRoot = Join-Path $env:LOCALAPPDATA "Overwolf\PackagesCache\$appId"
 $stateRoot = Join-Path $env:LOCALAPPDATA "AlecaFrame-ZH-Patch"
 . (Join-Path $PSScriptRoot "AlecaFrame-ZH-Compatibility.ps1")
+Stop-AlecaFrameOcrHelper -ProjectRoot $PSScriptRoot
 
 Get-Process -Name "Overwolf" -ErrorAction SilentlyContinue | Stop-Process
 Start-Sleep -Seconds 4

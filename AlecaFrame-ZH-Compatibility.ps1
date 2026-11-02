@@ -216,3 +216,97 @@ function Restore-OfficialFiles {
     }
 }
 
+function New-AlecaFrameOcrJob {
+    param([int]$HelperProcessId, [uint64]$MemoryLimitBytes)
+    if (-not ('AlecaFrameOcrJob' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+public static class AlecaFrameOcrJob {
+    [StructLayout(LayoutKind.Sequential)] struct Basic {
+        public long UserTime, JobTime;
+        public uint Flags;
+        public UIntPtr MinWorkingSet, MaxWorkingSet;
+        public uint ActiveProcesses;
+        public UIntPtr Affinity;
+        public uint Priority, Scheduling;
+    }
+    [StructLayout(LayoutKind.Sequential)] struct IO {
+        public ulong ReadOps, WriteOps, OtherOps, ReadBytes, WriteBytes, OtherBytes;
+    }
+    [StructLayout(LayoutKind.Sequential)] struct Extended {
+        public Basic BasicLimits;
+        public IO Counters;
+        public UIntPtr ProcessMemory, JobMemory, PeakProcessMemory, PeakJobMemory;
+    }
+    [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+    static extern SafeFileHandle CreateJobObject(IntPtr attributes, string name);
+    [DllImport("kernel32.dll", SetLastError=true)]
+    static extern bool SetInformationJobObject(SafeFileHandle job, int infoClass, IntPtr data, uint length);
+    [DllImport("kernel32.dll", SetLastError=true)]
+    static extern bool AssignProcessToJobObject(SafeFileHandle job, IntPtr process);
+    [DllImport("kernel32.dll", SetLastError=true)]
+    static extern bool QueryInformationJobObject(SafeFileHandle job, int infoClass, IntPtr data, uint length, IntPtr returned);
+    public static ulong[] MemoryInfo(SafeFileHandle job) {
+        int size = Marshal.SizeOf(typeof(Extended));
+        IntPtr data = Marshal.AllocHGlobal(size);
+        try {
+            if (!QueryInformationJobObject(job, 9, data, (uint)size, IntPtr.Zero))
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            Extended limits = (Extended)Marshal.PtrToStructure(data, typeof(Extended));
+            return new ulong[] { limits.JobMemory.ToUInt64(), limits.PeakJobMemory.ToUInt64() };
+        } finally { Marshal.FreeHGlobal(data); }
+    }
+    public static SafeFileHandle Create(int processId, ulong memoryBytes) {
+        SafeFileHandle job = CreateJobObject(IntPtr.Zero, null);
+        if (job.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
+        IntPtr data = IntPtr.Zero;
+        try {
+            Extended limits = new Extended();
+            limits.BasicLimits.Flags = 0x00000200 | 0x00002000;
+            limits.JobMemory = new UIntPtr(memoryBytes);
+            int size = Marshal.SizeOf(typeof(Extended));
+            data = Marshal.AllocHGlobal(size);
+            Marshal.StructureToPtr(limits, data, false);
+            if (!SetInformationJobObject(job, 9, data, (uint)size))
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            using (Process child = Process.GetProcessById(processId)) {
+                if (!AssignProcessToJobObject(job, child.Handle))
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
+            return job;
+        } catch { job.Dispose(); throw; }
+        finally { if (data != IntPtr.Zero) Marshal.FreeHGlobal(data); }
+    }
+}
+'@
+    }
+    return [AlecaFrameOcrJob]::Create($HelperProcessId, $MemoryLimitBytes)
+}
+
+function Stop-AlecaFrameOcrHelper {
+    param([string]$ProjectRoot, [int]$HelperProcessId = 0)
+    $expectedScript = if ($ProjectRoot) { Join-Path ([IO.Path]::GetFullPath($ProjectRoot)) 'alecaframe-relic-ocr-server.js' } else { '' }
+    if ($HelperProcessId -gt 0) {
+        $candidates = @(Get-CimInstance Win32_Process -Filter "ProcessId = $HelperProcessId" -ErrorAction SilentlyContinue)
+    }
+    elseif ($expectedScript) {
+        $candidates = @(Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue)
+    }
+    else { return }
+    foreach ($candidate in $candidates) {
+        if ($candidate.Name -ne 'node.exe' -or $candidate.CommandLine -notmatch 'alecaframe-relic-ocr-server\.js(?:["\s]|$)') { continue }
+        if ($expectedScript -and $candidate.CommandLine.IndexOf($expectedScript, [StringComparison]::OrdinalIgnoreCase) -lt 0) { continue }
+        $current = Get-CimInstance Win32_Process -Filter "ProcessId = $($candidate.ProcessId)" -ErrorAction SilentlyContinue
+        if (-not $current -or $current.CreationDate -ne $candidate.CreationDate) { continue }
+        $killer = Start-Process -FilePath (Join-Path $env:SystemRoot 'System32\taskkill.exe') `
+            -ArgumentList @('/PID', [string]$candidate.ProcessId, '/T', '/F') -WindowStyle Hidden -Wait -PassThru
+        $killer.Dispose()
+        $remaining = Get-CimInstance Win32_Process -Filter "ProcessId = $($candidate.ProcessId)" -ErrorAction SilentlyContinue
+        if ($remaining -and $remaining.CreationDate -eq $candidate.CreationDate) { throw '无法停止当前项目的 OCR 工作进程。' }
+    }
+}
+

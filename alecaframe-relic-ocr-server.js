@@ -5,9 +5,13 @@ const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const os = require("os");
+const { OcrWorkerManager } = require("./alecaframe-ocr-worker-manager.js");
 
 const [translationsPath, ocrScriptPath, outputDirectory, captureScriptPath, paddlePythonPath, paddleWorkerPath, requestedPort] = process.argv.slice(2);
 const port = Number(requestedPort || 38147);
+const ownerPid = Number(process.argv[9] || 0);
+const settingsPath = process.argv[10] || "";
 const powershell = path.join(process.env.SystemRoot || "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
 
 if (!translationsPath || !ocrScriptPath || !outputDirectory || !captureScriptPath || !paddlePythonPath || !paddleWorkerPath) {
@@ -46,6 +50,16 @@ const diagnosticScreenshotGroups = Object.freeze([
   (name) => name.startsWith("foreground-")
 ]);
 const diagnosticScreenshotLimit = 20;
+const screenshotsInUse = new Map();
+async function withScreenshotInput(filePath, operation) {
+  screenshotsInUse.set(filePath, (screenshotsInUse.get(filePath) || 0) + 1);
+  try { return await operation(); }
+  finally {
+    const remaining = screenshotsInUse.get(filePath) - 1;
+    if (remaining) screenshotsInUse.set(filePath, remaining);
+    else screenshotsInUse.delete(filePath);
+  }
+}
 
 function trimDiagnosticScreenshots() {
   let files;
@@ -71,6 +85,7 @@ function trimDiagnosticScreenshots() {
       .sort((left, right) => right.modifiedAt - left.modifiedAt);
 
     for (const stale of matches.slice(diagnosticScreenshotLimit)) {
+      if (screenshotsInUse.has(stale.filePath)) continue;
       try {
         fs.unlinkSync(stale.filePath);
       } catch {
@@ -339,104 +354,26 @@ function isOneEditAway(observed, expected) {
   return observed.length - left - right <= 1 && expected.length - left - right <= 1;
 }
 
-let paddleChild = null;
-let paddleReady = false;
-let paddleBuffer = "";
-let paddleStartPromise = null;
-const paddleRequests = [];
-const paddleStartupTimeoutMs = 120000;
-
-function rejectPaddleRequests(reason) {
-  while (paddleRequests.length) {
-    paddleRequests.shift().resolve({ success: false, reason });
+let shuttingDown = false;
+const jobLeasePath = process.env.ALECAFRAME_OCR_JOB_LEASE || "";
+let modelAllowed = !jobLeasePath;
+const auxiliaryChildren = new Set();
+const minimumFreeBytes = Math.max(512 * 1024 * 1024, os.totalmem() * 0.03);
+const paddleManager = new OcrWorkerManager({
+  pythonPath: paddlePythonPath, workerPath: paddleWorkerPath, audit,
+  minimumFreeBytes,
+  privateLimitBytes: Number(process.env.ALECAFRAME_OCR_PRIVATE_LIMIT_MB || 1536) * 1024 * 1024,
+  env: {
+    ...process.env,
+    HOME: path.join(path.dirname(paddleWorkerPath), ".tools", "paddleocr-home"),
+    USERPROFILE: path.join(path.dirname(paddleWorkerPath), ".tools", "paddleocr-home"),
+    PADDLE_HOME: path.join(path.dirname(paddleWorkerPath), ".tools", "paddleocr-home"),
+    FLAGS_use_mkldnn: "0", OMP_NUM_THREADS: "2", MKL_NUM_THREADS: "2"
   }
-}
-
-function startPaddleWorker() {
-  if (paddleReady && paddleChild) return Promise.resolve(true);
-  if (paddleStartPromise) return paddleStartPromise;
-  paddleStartPromise = new Promise((resolve) => {
-    const child = spawn(paddlePythonPath, [paddleWorkerPath], {
-      windowsHide: true,
-      env: {
-        ...process.env,
-        HOME: path.join(path.dirname(paddleWorkerPath), ".tools", "paddleocr-home"),
-        USERPROFILE: path.join(path.dirname(paddleWorkerPath), ".tools", "paddleocr-home"),
-        PADDLE_HOME: path.join(path.dirname(paddleWorkerPath), ".tools", "paddleocr-home"),
-        FLAGS_use_mkldnn: "0"
-      }
-    });
-    paddleChild = child;
-    let settled = false;
-    const finish = (ready) => {
-      if (settled) return;
-      settled = true;
-      paddleStartPromise = null;
-      paddleReady = ready;
-      audit(ready ? "PADDLE_READY" : "PADDLE_UNAVAILABLE");
-      resolve(ready);
-    };
-    child.stdout.setEncoding("utf8");
-    child.stdout.on("data", (chunk) => {
-      paddleBuffer += chunk;
-      let newline;
-      while ((newline = paddleBuffer.indexOf("\n")) >= 0) {
-        const line = paddleBuffer.slice(0, newline).trim();
-        paddleBuffer = paddleBuffer.slice(newline + 1);
-        if (!line) continue;
-        try {
-          const response = JSON.parse(line);
-          if (response.ready) {
-            finish(true);
-          } else if (paddleRequests.length) {
-            paddleRequests.shift().resolve(response);
-          }
-        } catch {
-          audit("PADDLE_PROTOCOL_INVALID", line.slice(0, 160));
-        }
-      }
-    });
-    child.stderr.setEncoding("utf8");
-    child.stderr.on("data", (chunk) => audit("PADDLE_STDERR", chunk.trim().slice(0, 300)));
-    child.on("error", (error) => {
-      audit("PADDLE_START_FAILED", error.message);
-      finish(false);
-      rejectPaddleRequests(error.message);
-    });
-    child.on("exit", (code) => {
-      paddleChild = null;
-      paddleReady = false;
-      paddleStartPromise = null;
-      audit("PADDLE_EXIT", String(code));
-      rejectPaddleRequests("Paddle worker exited.");
-    });
-    // Paddle can load its Chinese recognition models noticeably slower after
-    // a cold AlecaFrame restart. Do not permanently mark a still-running
-    // worker unavailable before it has a chance to emit its ready message.
-    setTimeout(() => {
-      if (!settled) {
-        audit("PADDLE_START_TIMEOUT", `waitedMs=${paddleStartupTimeoutMs}`);
-        finish(false);
-      }
-    }, paddleStartupTimeoutMs);
-  });
-  return paddleStartPromise;
-}
-
-async function runPaddleWorker(imagePath, crop = null, extra = {}) {
-  if (!(await startPaddleWorker()) || !paddleChild || !paddleReady) {
-    return { success: false, reason: "Paddle worker is unavailable." };
-  }
-  return new Promise((resolve) => {
-    const request = { resolve };
-    paddleRequests.push(request);
-    try {
-      paddleChild.stdin.write(`${JSON.stringify({ path: imagePath, crop, ...extra })}\n`);
-    } catch (error) {
-      paddleRequests.splice(paddleRequests.indexOf(request), 1);
-      resolve({ success: false, reason: error.message });
-    }
-  });
+});
+function runPaddleWorker(imagePath, crop = null, extra = {}) {
+  if (!modelAllowed) return Promise.resolve({ success: false, resourceLimited: true, reason: "OCR memory protection is not ready." });
+  return paddleManager.run(imagePath, crop, extra);
 }
 
 function appendPaddleLaneCandidates(lane, candidates, options = {}) {
@@ -842,56 +779,52 @@ function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-function runOcrWorker(imagePath, outputPath) {
+function runAuxiliaryJson(args) {
+  if (!modelAllowed || shuttingDown || auxiliaryChildren.size >= 1 || os.freemem() < minimumFreeBytes) {
+    return Promise.resolve({ success: false, resourceLimited: true, reason: "OCR auxiliary memory budget is busy." });
+  }
   return new Promise((resolve) => {
-    try {
-      ensureTranslationsFile();
-    } catch (error) {
-      resolve({ success: false, reason: `Unable to prepare item translations: ${error.message}` });
-      return;
-    }
-    const child = spawn(powershell, [
-      "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
-      "-File", ocrScriptPath,
-      "-ImagePath", imagePath,
-      "-TranslationsPath", normalizedTranslationsPath,
-      "-OutputPath", outputPath
-    ], { windowsHide: true });
+    let child;
+    try { child = spawn(powershell, ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", ...args], { windowsHide: true }); }
+    catch (error) { resolve({ success: false, reason: error.message }); return; }
+    auxiliaryChildren.add(child);
     let output = "";
+    let settled = false;
+    const finish = result => { if (!settled) { settled = true; resolve(result); } };
+    const timer = setTimeout(() => {
+      finish({ success: false, resourceLimited: true, reason: "OCR auxiliary timed out." });
+      child.kill();
+    }, 30000);
     child.stdout.setEncoding("utf8");
-    child.stdout.on("data", (data) => { output += data; });
-    child.on("error", (error) => resolve({ success: false, reason: error.message }));
-    child.on("close", () => {
-      try {
-        const result = JSON.parse(output.trim());
-        resolve(result);
-      } catch {
-        resolve({ success: false, reason: "Local OCR returned an invalid response." });
+    child.stdout.on("data", data => {
+      if (settled) return;
+      output += data;
+      if (output.length > 2 * 1024 * 1024) {
+        finish({ success: false, resourceLimited: true, reason: "OCR auxiliary output exceeded its limit." });
+        child.kill();
       }
+    });
+    child.stderr.on("data", () => {});
+    child.on("error", error => finish({ success: false, reason: error.message }));
+    child.on("close", () => {
+      clearTimeout(timer); auxiliaryChildren.delete(child);
+      try { finish(JSON.parse(output.trim())); }
+      catch { finish({ success: false, reason: "Local OCR returned an invalid response." }); }
+      output = "";
     });
   });
 }
 
+function runOcrWorker(imagePath, outputPath) {
+  try { ensureTranslationsFile(); }
+  catch (error) { return Promise.resolve({ success: false, reason: error.message }); }
+  return runAuxiliaryJson(["-File", ocrScriptPath, "-ImagePath", imagePath,
+    "-TranslationsPath", normalizedTranslationsPath, "-OutputPath", outputPath]);
+}
+
 function captureForegroundWarframe() {
-  return new Promise((resolve) => {
-    const outputPath = path.join(outputDirectory, `foreground-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
-    const child = spawn(powershell, [
-      "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
-      "-File", captureScriptPath,
-      "-OutputPath", outputPath
-    ], { windowsHide: true });
-    let output = "";
-    child.stdout.setEncoding("utf8");
-    child.stdout.on("data", (data) => { output += data; });
-    child.on("error", (error) => resolve({ success: false, reason: error.message }));
-    child.on("close", () => {
-      try {
-        resolve(JSON.parse(output.trim()));
-      } catch {
-        resolve({ success: false, reason: "Foreground capture returned an invalid response." });
-      }
-    });
-  });
+  const outputPath = path.join(outputDirectory, `foreground-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
+  return runAuxiliaryJson(["-File", captureScriptPath, "-OutputPath", outputPath]);
 }
 
 function normalizeRivenLines(workerResult) {
@@ -1101,32 +1034,34 @@ async function processRivenScreenshot(imagePath) {
   } catch (error) {
     return { success: false, reason: `Unable to preserve riven screenshot: ${error.message}` };
   }
-  trimDiagnosticScreenshots();
-  const workerResult = await runPaddleWorker(snapshotPath, rivenCrop);
-  if (!workerResult || !workerResult.success) {
-    return { success: false, reason: workerResult && workerResult.reason || "Paddle could not read the riven crop." };
-  }
-  const lines = normalizeRivenLines(workerResult);
-  const parsed = resolvePaddleRivenDiagnostic(lines);
-  const result = {
-    success: true,
-    screenKind: "riven-diagnostic",
-    capturedAt: Date.now(),
-    sourcePath: snapshotPath,
-    crop: rivenCrop,
-    imageWidth: workerResult.imageWidth,
-    imageHeight: workerResult.imageHeight,
-    lines,
-    parsed,
-    rawText: lines.map((line) => line.text).join("\n"),
-    recognitionEngine: "paddle-riven-diagnostic"
-  };
-  fs.writeFileSync(latestRivenPath, JSON.stringify(result, null, 2), "utf8");
-  audit("RIVEN_PADDLE_RESULT", lines.map((line) => `${line.text} (${line.confidence.toFixed(2)})`).join(" | ").slice(0, 1200));
-  audit("RIVEN_PARSE_RESULT", parsed.success
-    ? `${parsed.weaponNameEnglishCandidate} rank=${parsed.rank === null ? "?" : parsed.rank} traits=${parsed.traits.length}`
-    : parsed.reason);
-  return result;
+  return withScreenshotInput(snapshotPath, async () => {
+    trimDiagnosticScreenshots();
+    const workerResult = await runPaddleWorker(snapshotPath, rivenCrop);
+    if (!workerResult || !workerResult.success) {
+      return { success: false, reason: workerResult && workerResult.reason || "Paddle could not read the riven crop." };
+    }
+    const lines = normalizeRivenLines(workerResult);
+    const parsed = resolvePaddleRivenDiagnostic(lines);
+    const result = {
+      success: true,
+      screenKind: "riven-diagnostic",
+      capturedAt: Date.now(),
+      sourcePath: snapshotPath,
+      crop: rivenCrop,
+      imageWidth: workerResult.imageWidth,
+      imageHeight: workerResult.imageHeight,
+      lines,
+      parsed,
+      rawText: lines.map((line) => line.text).join("\n"),
+      recognitionEngine: "paddle-riven-diagnostic"
+    };
+    fs.writeFileSync(latestRivenPath, JSON.stringify(result, null, 2), "utf8");
+    audit("RIVEN_PADDLE_RESULT", lines.map((line) => `${line.text} (${line.confidence.toFixed(2)})`).join(" | ").slice(0, 1200));
+    audit("RIVEN_PARSE_RESULT", parsed.success
+      ? `${parsed.weaponNameEnglishCandidate} rank=${parsed.rank === null ? "?" : parsed.rank} traits=${parsed.traits.length}`
+      : parsed.reason);
+    return result;
+  });
 }
 
 async function captureRivenWithPaddle() {
@@ -1192,36 +1127,40 @@ async function processScreenshot(imagePath, requiresStableCopy = true, maxAttemp
     } catch (error) {
       return { success: false, reason: `Unable to copy screenshot: ${error.message}` };
     }
-    trimDiagnosticScreenshots();
   }
-  let lastResult = { success: false, reason: "OCR worker did not return a result." };
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const outputPath = path.join(outputDirectory, `relic-zh-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
-    const paddleResult = await resolvePaddleRewardsWithTitleCrops(await runPaddleWorker(snapshotPath), snapshotPath);
-    if (paddleResult) {
-      audit("PADDLE_REWARD_MATCH", paddleResult.replacements.join(" | "));
-      saveLatestReward(paddleResult);
-      return paddleResult;
-    }
-    if (!allowWindowsFallback) {
-      lastResult = { success: false, reason: "Paddle did not recognize a complete 2-4 reward-card result." };
-      audit("PADDLE_REWARD_PENDING", lastResult.reason);
+  return withScreenshotInput(snapshotPath, async () => {
+    trimDiagnosticScreenshots();
+    let lastResult = { success: false, reason: "OCR worker did not return a result." };
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const outputPath = path.join(outputDirectory, `relic-zh-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
+      const paddleRaw = await runPaddleWorker(snapshotPath);
+      if (paddleRaw?.resourceLimited) return paddleRaw;
+      const paddleResult = await resolvePaddleRewardsWithTitleCrops(paddleRaw, snapshotPath);
+      if (paddleResult) {
+        audit("PADDLE_REWARD_MATCH", paddleResult.replacements.join(" | "));
+        saveLatestReward(paddleResult);
+        return paddleResult;
+      }
+      if (!allowWindowsFallback) {
+        lastResult = { success: false, reason: "Paddle did not recognize a complete 2-4 reward-card result." };
+        audit("PADDLE_REWARD_PENDING", lastResult.reason);
+        if (attempt + 1 < maxAttempts) {
+          await delay(350 * (attempt + 1));
+        }
+        continue;
+      }
+      audit("PADDLE_FALLBACK_WINDOWS", "No complete 2-4 reward-card result.");
+      lastResult = await runOcrWorker(snapshotPath, outputPath);
+      if (lastResult.success) {
+        saveLatestReward(lastResult);
+        return lastResult;
+      }
       if (attempt + 1 < maxAttempts) {
         await delay(350 * (attempt + 1));
       }
-      continue;
     }
-    audit("PADDLE_FALLBACK_WINDOWS", "No complete 2-4 reward-card result.");
-    lastResult = await runOcrWorker(snapshotPath, outputPath);
-    if (lastResult.success) {
-      saveLatestReward(lastResult);
-      return lastResult;
-    }
-    if (attempt + 1 < maxAttempts) {
-      await delay(350 * (attempt + 1));
-    }
-  }
-  return lastResult;
+    return lastResult;
+  });
 }
 
 function resolvePaddleRefinement(result) {
@@ -1269,40 +1208,44 @@ async function processRefinementScreenshot(imagePath) {
   } catch (error) {
     return { success: false, reason: `Unable to copy refinement screenshot: ${error.message}` };
   }
-  trimDiagnosticScreenshots();
-  const paddleProbe = await runPaddleWorker(snapshotPath, {
-    left: 0,
-    top: 0,
-    right: 0.38,
-    bottom: 0.40,
-    relative: true
-  });
-  // The relative crop contains only the title and era grid. This avoids
-  // treating unrelated gameplay text as an era label and keeps the resident
-  // Paddle request substantially smaller than a full-frame recognition.
-  if (paddleProbe && paddleProbe.success) {
-    const paddleResult = resolvePaddleRefinement(paddleProbe);
-    if (paddleResult) {
-      const landmarkPath = path.join(outputDirectory, `refinement-paddle-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
-      const landmark = await runPaddleWorker(snapshotPath, null, {
-        mode: "refinement-landmark",
-        outputPath: landmarkPath
-      });
-      if (landmark && landmark.success && landmark.outputPath && fs.existsSync(landmark.outputPath)) {
-        paddleResult.outputPath = landmark.outputPath;
-        audit("PADDLE_REFINEMENT_MATCH", `${paddleResult.era} ${paddleResult.candidates.join(" | ")}`);
-        return paddleResult;
+  return withScreenshotInput(snapshotPath, async () => {
+    trimDiagnosticScreenshots();
+    const paddleProbe = await runPaddleWorker(snapshotPath, {
+      left: 0,
+      top: 0,
+      right: 0.38,
+      bottom: 0.40,
+      relative: true
+    });
+    if (paddleProbe?.resourceLimited) return paddleProbe;
+    // The relative crop contains only the title and era grid. This avoids
+    // treating unrelated gameplay text as an era label and keeps the resident
+    // Paddle request substantially smaller than a full-frame recognition.
+    if (paddleProbe && paddleProbe.success) {
+      const paddleResult = resolvePaddleRefinement(paddleProbe);
+      if (paddleResult) {
+        const landmarkPath = path.join(outputDirectory, `refinement-paddle-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
+        const landmark = await runPaddleWorker(snapshotPath, null, {
+          mode: "refinement-landmark",
+          outputPath: landmarkPath
+        });
+        if (landmark?.resourceLimited) return landmark;
+        if (landmark && landmark.success && landmark.outputPath && fs.existsSync(landmark.outputPath)) {
+          paddleResult.outputPath = landmark.outputPath;
+          audit("PADDLE_REFINEMENT_MATCH", `${paddleResult.era} ${paddleResult.candidates.join(" | ")}`);
+          return paddleResult;
+        }
+        audit("PADDLE_REFINEMENT_LANDMARK_FAILED", landmark && landmark.reason || "No output path.");
       }
-      audit("PADDLE_REFINEMENT_LANDMARK_FAILED", landmark && landmark.reason || "No output path.");
+      audit("PADDLE_REFINEMENT_NO_MATCH", (paddleProbe.lines || []).map((line) => line.text).join(" | "));
     }
-    audit("PADDLE_REFINEMENT_NO_MATCH", (paddleProbe.lines || []).map((line) => line.text).join(" | "));
-  }
-  // Keep the existing Windows OCR path as a correctness fallback. Its output
-  // also creates AlecaFrame's English landmark image for uncommon layouts.
-  const outputPath = path.join(outputDirectory, `refinement-zh-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
-  const result = await runOcrWorker(snapshotPath, outputPath);
-  if (!result.success || result.screenKind !== "refinement") return result;
-  return result;
+    // Keep the existing Windows OCR path as a correctness fallback. Its output
+    // also creates AlecaFrame's English landmark image for uncommon layouts.
+    const outputPath = path.join(outputDirectory, `refinement-zh-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
+    const result = await runOcrWorker(snapshotPath, outputPath);
+    if (!result.success || result.screenKind !== "refinement") return result;
+    return result;
+  });
 }
 
 const server = http.createServer((request, response) => {
@@ -1318,7 +1261,7 @@ const server = http.createServer((request, response) => {
     return;
   }
   if (request.method === "GET" && request.url === "/health") {
-    return sendJson(response, 200, { ready: true });
+    return sendJson(response, 200, { ready: !shuttingDown && modelAllowed, pid: process.pid, worker: paddleManager.status(), auxiliary: auxiliaryChildren.size });
   }
   if (request.method === "GET" && request.url === "/latest-reward") {
     try {
@@ -1558,6 +1501,52 @@ const server = http.createServer((request, response) => {
 
 server.listen(port, "127.0.0.1", () => {
   trimDiagnosticScreenshots();
-  startPaddleWorker().catch(() => { });
+  if (modelAllowed) paddleManager.ensureWorker().catch(error => audit("PADDLE_START_FAILED", error.message));
   process.stdout.write(`AlecaFrame Chinese relic OCR listening on ${port}\n`);
 });
+
+function shutdownOcrService(reason) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  audit("OCR_SERVICE_STOP", reason);
+  clearInterval(lifetimeTimer);
+  clearInterval(jobReadyTimer);
+  if (settingsPath) fs.unwatchFile(settingsPath);
+  server.close(); server.closeAllConnections?.();
+  const waits = [paddleManager.close()];
+  for (const child of auxiliaryChildren) {
+    waits.push(new Promise(resolve => child.once("close", resolve)));
+    child.kill();
+  }
+  Promise.allSettled(waits).then(() => process.exit(0));
+  setTimeout(() => process.exit(1), 5000).unref();
+}
+const lifetimeTimer = setInterval(() => {
+  if (os.freemem() < minimumFreeBytes) for (const child of auxiliaryChildren) child.kill();
+  if (ownerPid > 0) {
+    try { process.kill(ownerPid, 0); }
+    catch (error) { if (error.code === "ESRCH") shutdownOcrService("launcher exited"); }
+  }
+}, 2000);
+lifetimeTimer.unref();
+if (settingsPath) fs.watchFile(settingsPath, { interval: 1000, persistent: false }, () => {
+  try {
+    if (JSON.parse(fs.readFileSync(settingsPath, "utf8").replace(/^\uFEFF/, "")).relicOcr?.enabled === false) {
+      shutdownOcrService("OCR disabled");
+    }
+  } catch { /* A settings write may be in progress. */ }
+});
+const jobReadyTimer = setInterval(() => {
+  if (modelAllowed || shuttingDown) { clearInterval(jobReadyTimer); return; }
+  try {
+    if (fs.readFileSync(jobLeasePath, "ascii").trim() === String(process.pid)) {
+      modelAllowed = true;
+      clearInterval(jobReadyTimer);
+      paddleManager.ensureWorker().catch(error => audit("PADDLE_START_FAILED", error.message));
+    }
+  } catch { /* The launcher has not assigned the Windows memory job yet. */ }
+}, 100);
+jobReadyTimer.unref();
+process.on("SIGINT", () => shutdownOcrService("interrupt"));
+process.on("SIGTERM", () => shutdownOcrService("terminate"));
+process.on("uncaughtException", error => shutdownOcrService("fatal: " + error.message));

@@ -11,6 +11,9 @@ if ($TestValidationReportOnly -and $SessionValidationReportOnly) {
 }
 $validationReportOnly = $TestValidationReportOnly -or $SessionValidationReportOnly
 $testSessionStarted = $false
+$ocrJobHandle = $null
+$ocrHelperProcessId = 0
+$ocrJobLeasePath = $null
 
 . (Join-Path $PSScriptRoot "AlecaFrame-ZH-Compatibility.ps1")
 
@@ -66,7 +69,8 @@ function Get-RelicOcrEnabled {
 function Test-RelicOcrPrerequisites {
     $nodeAvailable = (Test-Path -LiteralPath $localNodeSource) -or $null -ne (Get-Command node -ErrorAction SilentlyContinue)
     if (-not $nodeAvailable) { return $false }
-    foreach ($path in @($relicOcrServerSource, $relicOcrWorkerSource, $relicCaptureSource, $paddleRewardWorkerSource, $paddlePythonSource)) {
+    foreach ($path in @($relicOcrServerSource, $relicOcrWorkerSource, $relicCaptureSource, $paddleRewardWorkerSource, $paddlePythonSource,
+        (Join-Path $PSScriptRoot 'alecaframe-ocr-worker-manager.js'))) {
         if (-not (Test-Path -LiteralPath $path)) { return $false }
     }
     return $true
@@ -507,7 +511,7 @@ function Start-RelicChineseOcrHelper {
             -ErrorAction SilentlyContinue
         if ($owner -and $owner.Name -eq "node.exe" -and
             $owner.CommandLine -like "*alecaframe-relic-ocr-server.js*") {
-            Stop-Process -Id $listeningConnection.OwningProcess -Force
+            Stop-AlecaFrameOcrHelper -HelperProcessId $listeningConnection.OwningProcess
             Start-Sleep -Milliseconds 350
             Write-LauncherLog "Previous Chinese relic OCR helper stopped"
         }
@@ -525,6 +529,11 @@ function Start-RelicChineseOcrHelper {
     $previousXdgCacheHome = $env:XDG_CACHE_HOME
     $previousHome = $env:HOME
     $previousUserProfile = $env:USERPROFILE
+    $previousPrivateLimit = $env:ALECAFRAME_OCR_PRIVATE_LIMIT_MB
+    $previousJobLease = $env:ALECAFRAME_OCR_JOB_LEASE
+    $script:ocrJobLeasePath = Join-Path $relicOcrStateRoot ('job-ready-' + [guid]::NewGuid().ToString('N') + '.txt')
+    $physicalBytes = [double](Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory
+    $jobMemoryBytes = [uint64][math]::Max([double](1536MB), [math]::Min([double](2048MB), $physicalBytes / 8))
     try {
         # Paddle 2.x uses XDG_CACHE_HOME/HOME for its model cache rather than
         # PADDLE_HOME alone. Keep all downloads inside this project.
@@ -532,17 +541,35 @@ function Start-RelicChineseOcrHelper {
         $env:XDG_CACHE_HOME = $paddleCacheRoot
         $env:HOME = (Join-Path $PSScriptRoot ".tools")
         $env:USERPROFILE = (Join-Path $PSScriptRoot ".tools")
-        Start-Process -FilePath $nodeCommand `
-            -ArgumentList @($relicOcrServerSource, $itemTranslationsSource, $relicOcrWorkerSource, $relicOcrStateRoot, $relicCaptureSource, $paddlePythonSource, $paddleRewardWorkerSource) `
+        $env:ALECAFRAME_OCR_PRIVATE_LIMIT_MB = [string][math]::Floor($jobMemoryBytes / 1MB * 0.75)
+        $env:ALECAFRAME_OCR_JOB_LEASE = $ocrJobLeasePath
+        $helperArguments = @($relicOcrServerSource, $itemTranslationsSource, $relicOcrWorkerSource, $relicOcrStateRoot,
+            $relicCaptureSource, $paddlePythonSource, $paddleRewardWorkerSource, '38147', [string]$PID, $ocrSettingsPath) |
+            ForEach-Object { '"' + $_ + '"' }
+        $helperProcess = Start-Process -FilePath $nodeCommand `
+            -ArgumentList $helperArguments -PassThru `
             -WindowStyle Hidden `
             -RedirectStandardOutput $helperStdoutLog `
             -RedirectStandardError $helperStderrLog
+        $script:ocrHelperProcessId = $helperProcess.Id
+        try {
+            $script:ocrJobHandle = New-AlecaFrameOcrJob -HelperProcessId $helperProcess.Id -MemoryLimitBytes $jobMemoryBytes
+            [IO.File]::WriteAllText($ocrJobLeasePath, [string]$helperProcess.Id, [Text.Encoding]::ASCII)
+        }
+        catch {
+            Stop-AlecaFrameOcrHelper -HelperProcessId $helperProcess.Id
+            throw
+        }
+        finally { $helperProcess.Dispose() }
+        Write-LauncherLog "OCR process-tree committed-memory limit: $([math]::Round($jobMemoryBytes / 1MB)) MiB"
     }
     finally {
         $env:PADDLE_HOME = $previousPaddleHome
         $env:XDG_CACHE_HOME = $previousXdgCacheHome
         $env:HOME = $previousHome
         $env:USERPROFILE = $previousUserProfile
+        $env:ALECAFRAME_OCR_PRIVATE_LIMIT_MB = $previousPrivateLimit
+        $env:ALECAFRAME_OCR_JOB_LEASE = $previousJobLease
     }
 
     for ($attempt = 0; $attempt -lt 20; $attempt++) {
@@ -820,6 +847,7 @@ try {
     }
     else {
         Write-LauncherLog "Chinese relic OCR disabled by saved setting or session default"
+        Stop-AlecaFrameOcrHelper -ProjectRoot $PSScriptRoot
     }
 
     Get-Process -Name "Overwolf" -ErrorAction SilentlyContinue | Stop-Process
@@ -939,6 +967,9 @@ catch {
     exit 1
 }
 finally {
+    if ($ocrJobHandle) { $ocrJobHandle.Dispose(); $ocrJobHandle = $null }
+    if ($ocrHelperProcessId) { Stop-AlecaFrameOcrHelper -HelperProcessId $ocrHelperProcessId }
+    if ($ocrJobLeasePath -and (Test-Path -LiteralPath $ocrJobLeasePath)) { Remove-Item -LiteralPath $ocrJobLeasePath -Force }
     if ($validationReportOnly -and $testSessionStarted) {
         try {
             Get-Process -Name "Overwolf" -ErrorAction SilentlyContinue | Stop-Process
