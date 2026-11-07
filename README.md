@@ -1,6 +1,8 @@
-# AlecaFrame-ZH 使用说明
+# AlecaFrame-ZH
 
-适用系统：Windows 10 / 11 64 位。本次在 AlecaFrame **3.0.6**、Overwolf **0.311.1.4** 上验证了中文启动及数据初始化，包含新版界面、仲裁星球及裂罅词条汉化。启动器会等待自动更新完成，再按实际运行版本和窗口清单加载汉化，不限制固定版本号；后续更新的兼容性仍以实际运行结果为准。
+AlecaFrame-ZH 是《Warframe》辅助工具 AlecaFrame 的简体中文补丁。汉化界面、物品名称、仲裁地点和裂罅词条，并提供可选的中文遗物与紫卡 OCR。
+
+适用系统：Windows 10 / 11 64 位。本次在 AlecaFrame **3.0.6**、Overwolf **0.311.1.4** 上验证了中文启动及数据初始化。启动器会等待自动更新完成，再按实际运行版本和窗口清单加载汉化，不限制固定版本号；后续更新的兼容性仍以实际运行结果为准。
 
 物品词库已按 2026 年 9 月 30 日官方数据更新，包含石晶之花 Prime、闪劫 Prime、寒怨刺、霜冥差及对应部件。战甲名称保留英文。
 
@@ -34,10 +36,4 @@ OCR 保留自动识别，模型单实例常驻，不需要额外快捷键。识�
 
 当前适配会让本次 Overwolf 会话中所有扩展的完整性错误仅记录、不关闭应用。请使用上述中文入口，并等待退出时的恢复流程完成。
 
-## 来源与授权
-
-本项目基于 [MIOEU/AlecaFrame-ZH](https://github.com/MIOEU/AlecaFrame-ZH) 修改，原作者为想吃西瓜。由 DDA-007 维护当前适配版本，新增启动兼容适配、中文 OCR 支持及物品词库更新。
-
-部分物品译名参考 Roc 维护的 [Warframe-Chinese-English-Bilingual](https://github.com/AdminRoc/Warframe-Chinese-English-Bilingual)，其 README 声明采用 MIT 协议；最新物品译名根据 Warframe 官方 PublicExport 中英文数据核对。
-
-本项目按随附的 [MIT License](LICENSE) 授权，保留原作者版权声明；DDA-007 的署名仅针对修改部分。
+[MIT License](LICENSE)
