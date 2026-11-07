@@ -54,7 +54,7 @@ function Assert-AlecaFrameIntegrity {
 
 $extraScriptNames = @(
     "alecaframe-zh-cn.js", "alecaframe-zh-cn-items.js", "alecaframe-zh-cn-relic-ducats.js",
-    "alecaframe-zh-cn-relic-ocr.js", "alecaframe-zh-cn-riven-ocr.js", "alecaframe-zh-cn-riven-overlay.js",
+    "alecaframe-zh-cn-ocr-capture.js", "alecaframe-zh-cn-relic-ocr.js", "alecaframe-zh-cn-riven-ocr.js", "alecaframe-zh-cn-riven-overlay.js",
     "alecaframe-zh-cn-relic-overlay.js", "alecaframe-zh-cn-relic-recommendation.js",
     "alecaframe-zh-cn-relic-planner-cache.js", "alecaframe-zh-cn-inventory-price-sync.js",
     "alecaframe-zh-cn-inventory-images.js"
@@ -250,6 +250,21 @@ public static class AlecaFrameOcrJob {
     static extern bool AssignProcessToJobObject(SafeFileHandle job, IntPtr process);
     [DllImport("kernel32.dll", SetLastError=true)]
     static extern bool QueryInformationJobObject(SafeFileHandle job, int infoClass, IntPtr data, uint length, IntPtr returned);
+    [StructLayout(LayoutKind.Sequential)] struct PerformanceInformation {
+        public uint Size;
+        public UIntPtr CommitTotal, CommitLimit, CommitPeak, PhysicalTotal, PhysicalAvailable,
+            SystemCache, KernelTotal, KernelPaged, KernelNonpaged, PageSize;
+        public uint HandleCount, ProcessCount, ThreadCount;
+    }
+    [DllImport("psapi.dll", SetLastError=true)]
+    static extern bool GetPerformanceInfo(out PerformanceInformation info, uint size);
+    public static ulong[] SystemCommit() {
+        PerformanceInformation info;
+        if (!GetPerformanceInfo(out info, (uint)Marshal.SizeOf(typeof(PerformanceInformation))))
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        ulong pageSize = info.PageSize.ToUInt64();
+        return new ulong[] { info.CommitTotal.ToUInt64() * pageSize, info.CommitLimit.ToUInt64() * pageSize };
+    }
     public static ulong[] MemoryInfo(SafeFileHandle job) {
         int size = Marshal.SizeOf(typeof(Extended));
         IntPtr data = Marshal.AllocHGlobal(size);

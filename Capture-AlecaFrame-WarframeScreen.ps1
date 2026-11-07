@@ -14,38 +14,58 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 public static class AlecaFrameForegroundCapture {
+    [StructLayout(LayoutKind.Sequential)]
+    struct Rect { public int Left, Top, Right, Bottom; }
+    [StructLayout(LayoutKind.Sequential)]
+    struct Point { public int X, Y; }
+
+    [DllImport("user32.dll")]
+    static extern IntPtr SetThreadDpiAwarenessContext(IntPtr context);
+    [DllImport("user32.dll")]
+    static extern bool GetClientRect(IntPtr window, out Rect rect);
+    [DllImport("user32.dll")]
+    static extern bool ClientToScreen(IntPtr window, ref Point point);
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
     [DllImport("user32.dll")]
     public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
 
-    public static string GetForegroundProcessName() {
+    public static bool CaptureWarframe(string path) {
         IntPtr window = GetForegroundWindow();
-        if (window == IntPtr.Zero) return "";
+        if (window == IntPtr.Zero) return false;
         uint processId;
         GetWindowThreadProcessId(window, out processId);
-        try { return System.Diagnostics.Process.GetProcessById((int)processId).ProcessName; }
-        catch { return ""; }
-    }
+        try {
+            using (var process = System.Diagnostics.Process.GetProcessById((int)processId))
+                if (process.ProcessName != "Warframe.x64") return false;
+        } catch (ArgumentException) { return false; }
 
-    public static void CapturePrimaryScreen(string path) {
-        var bounds = Screen.PrimaryScreen.Bounds;
-        using (var bitmap = new Bitmap(bounds.Width, bounds.Height))
-        using (var graphics = Graphics.FromImage(bitmap)) {
-            graphics.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, bounds.Size, CopyPixelOperation.SourceCopy);
-            bitmap.Save(path, System.Drawing.Imaging.ImageFormat.Png);
-        }
+        IntPtr previousDpiContext = SetThreadDpiAwarenessContext(new IntPtr(-4));
+        if (previousDpiContext == IntPtr.Zero) return false;
+        try {
+            Rect rect;
+            Point origin = new Point();
+            if (!GetClientRect(window, out rect) || !ClientToScreen(window, ref origin)) return false;
+            var bounds = new Rectangle(origin.X, origin.Y, rect.Right, rect.Bottom);
+            if (bounds.Width <= 0 || bounds.Height <= 0 ||
+                !Screen.FromHandle(window).Bounds.Contains(bounds) || GetForegroundWindow() != window) return false;
+
+            using (var bitmap = new Bitmap(bounds.Width, bounds.Height))
+            using (var graphics = Graphics.FromImage(bitmap)) {
+                graphics.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, bounds.Size, CopyPixelOperation.SourceCopy);
+                if (GetForegroundWindow() != window) return false;
+                bitmap.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+                return true;
+            }
+        } finally { SetThreadDpiAwarenessContext(previousDpiContext); }
     }
 }
 '@
 
-$processName = [AlecaFrameForegroundCapture]::GetForegroundProcessName()
-if ($processName -ne "Warframe.x64") {
-    @{ success = $false; reason = "Warframe is not the foreground window ($processName)." } |
+if (-not [AlecaFrameForegroundCapture]::CaptureWarframe($OutputPath)) {
+    @{ success = $false; reason = "Warframe's game window is not fully visible in the foreground." } |
         ConvertTo-Json -Compress
     exit 0
 }
-
-[AlecaFrameForegroundCapture]::CapturePrimaryScreen($OutputPath)
 @{ success = $true; path = $OutputPath } | ConvertTo-Json -Compress

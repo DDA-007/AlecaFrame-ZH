@@ -14,6 +14,7 @@ $testSessionStarted = $false
 $ocrJobHandle = $null
 $ocrHelperProcessId = 0
 $ocrJobLeasePath = $null
+$ocrHostMemoryLimit = 0
 
 . (Join-Path $PSScriptRoot "AlecaFrame-ZH-Compatibility.ps1")
 
@@ -26,6 +27,7 @@ $stateRoot = Join-Path $env:LOCALAPPDATA "AlecaFrame-ZH-Patch"
 $localizerSource = Join-Path $PSScriptRoot "alecaframe-zh-cn.js"
 $itemTranslationsSource = Join-Path $PSScriptRoot "alecaframe-zh-cn-items.js"
 $relicDucatsSource = Join-Path $PSScriptRoot "alecaframe-zh-cn-relic-ducats.js"
+$ocrCaptureBridgeSource = Join-Path $PSScriptRoot "alecaframe-zh-cn-ocr-capture.js"
 $relicOcrBridgeSource = Join-Path $PSScriptRoot "alecaframe-zh-cn-relic-ocr.js"
 $rivenOcrBridgeSource = Join-Path $PSScriptRoot "alecaframe-zh-cn-riven-ocr.js"
 $rivenOverlaySource = Join-Path $PSScriptRoot "alecaframe-zh-cn-riven-overlay.js"
@@ -156,7 +158,7 @@ function Add-ChineseFiles {
     $sourceFiles = @($localizerSource, $itemTranslationsSource, $relicDucatsSource,
         $relicOverlaySource, $relicRecommendationSource, $relicPlannerCacheSource,
         $inventoryPriceSyncSource, $inventoryImagesSource)
-    if ($EnableRelicOcr) { $sourceFiles += @($relicOcrBridgeSource, $rivenOcrBridgeSource, $rivenOverlaySource) }
+    if ($EnableRelicOcr) { $sourceFiles += @($ocrCaptureBridgeSource, $relicOcrBridgeSource, $rivenOcrBridgeSource, $rivenOverlaySource) }
     foreach ($source in $sourceFiles) {
         if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "缺少汉化脚本：$source" }
     }
@@ -170,7 +172,7 @@ function Add-ChineseFiles {
         $original = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
         $scripts = @('alecaframe-zh-cn-items.js', 'alecaframe-zh-cn.js')
         if ($EnableRelicOcr -and $relativePage -eq 'background.html') {
-            $scripts += @('alecaframe-zh-cn-relic-ocr.js', 'alecaframe-zh-cn-riven-ocr.js')
+            $scripts += @('alecaframe-zh-cn-ocr-capture.js', 'alecaframe-zh-cn-relic-ocr.js', 'alecaframe-zh-cn-riven-ocr.js')
         }
         if ($EnableRelicOcr -and $relativePage -eq 'rivenOverlay.html') {
             $scripts += 'alecaframe-zh-cn-riven-overlay.js'
@@ -456,6 +458,9 @@ function alecaFrameZhCnRequestRewardCapture() {
         -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-ducats.js") `
         -Force
     if ($EnableRelicOcr) {
+        Copy-Item -LiteralPath $ocrCaptureBridgeSource `
+            -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-ocr-capture.js") `
+            -Force
         Copy-Item -LiteralPath $relicOcrBridgeSource `
             -Destination (Join-Path $webRoot "assets\js\alecaframe-zh-cn-relic-ocr.js") `
             -Force
@@ -534,6 +539,7 @@ function Start-RelicChineseOcrHelper {
     $script:ocrJobLeasePath = Join-Path $relicOcrStateRoot ('job-ready-' + [guid]::NewGuid().ToString('N') + '.txt')
     $physicalBytes = [double](Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory
     $jobMemoryBytes = [uint64][math]::Max([double](1536MB), [math]::Min([double](2048MB), $physicalBytes / 8))
+    $script:ocrHostMemoryLimit = [uint64][math]::Max([double](2GB), [math]::Min([double](4GB), $physicalBytes / 8))
     try {
         # Paddle 2.x uses XDG_CACHE_HOME/HOME for its model cache rather than
         # PADDLE_HOME alone. Keep all downloads inside this project.
@@ -935,7 +941,24 @@ try {
     }
     elseif ($SessionValidationReportOnly) {
         Write-Output "SESSION_READY: experimental Chinese UI loaded. Exit Overwolf normally to restore official files."
-        while (Get-Process -Name "Overwolf" -ErrorAction SilentlyContinue) {
+        $captureStatus = ''
+        while ($overwolfProcesses = Get-Process -Name "Overwolf" -ErrorAction SilentlyContinue) {
+            if ($ocrJobHandle) {
+                $status = 'unavailable'
+                try {
+                    $hostBytes = ($overwolfProcesses | Measure-Object -Property PrivateMemorySize64 -Sum).Sum
+                    $committed, $limit = [AlecaFrameOcrJob]::SystemCommit()
+                    $status = if ($hostBytes -ge $ocrHostMemoryLimit) { 'host memory' }
+                        elseif ($limit - $committed -lt [math]::Max([double](1GB), $limit * 0.08)) { 'system commit' }
+                        else { 'ready' }
+                    [IO.File]::WriteAllText("$ocrJobLeasePath.capture", $status, [Text.Encoding]::ASCII)
+                }
+                catch { }
+                if ($captureStatus -ne $status) {
+                    Write-LauncherLog "OCR capture status: $status"
+                    $captureStatus = $status
+                }
+            }
             Start-Sleep -Seconds 2
         }
     }
@@ -969,7 +992,11 @@ catch {
 finally {
     if ($ocrJobHandle) { $ocrJobHandle.Dispose(); $ocrJobHandle = $null }
     if ($ocrHelperProcessId) { Stop-AlecaFrameOcrHelper -HelperProcessId $ocrHelperProcessId }
-    if ($ocrJobLeasePath -and (Test-Path -LiteralPath $ocrJobLeasePath)) { Remove-Item -LiteralPath $ocrJobLeasePath -Force }
+    if ($ocrJobLeasePath) {
+        foreach ($lease in @($ocrJobLeasePath, "$ocrJobLeasePath.capture")) {
+            if (Test-Path -LiteralPath $lease) { Remove-Item -LiteralPath $lease -Force }
+        }
+    }
     if ($validationReportOnly -and $testSessionStarted) {
         try {
             Get-Process -Name "Overwolf" -ErrorAction SilentlyContinue | Stop-Process

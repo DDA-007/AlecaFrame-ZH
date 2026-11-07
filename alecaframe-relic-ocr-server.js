@@ -2,6 +2,7 @@
 
 const http = require("http");
 const { spawn } = require("child_process");
+const { randomUUID } = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
@@ -1248,6 +1249,95 @@ async function processRefinementScreenshot(imagePath) {
   });
 }
 
+const maxFrameBytes = 16 * 1024 * 1024;
+let automaticCaptureActive = false;
+
+function captureAllowed() {
+  if (!modelAllowed || shuttingDown || automaticCaptureActive || os.freemem() < minimumFreeBytes) return false;
+  if (!jobLeasePath) return true;
+  const statusPath = jobLeasePath + ".capture";
+  try {
+    return Date.now() - fs.statSync(statusPath).mtimeMs < 8000 &&
+      fs.readFileSync(statusPath, "ascii") === "ready";
+  } catch {
+    return false;
+  }
+}
+
+async function readRequestBytes(request, maximum) {
+  const chunks = [];
+  let length = 0;
+  request.setTimeout(8000, () => request.destroy());
+  try {
+    for await (const chunk of request) {
+      length += chunk.length;
+      if (length > maximum) throw new Error("OCR input exceeds its size limit.");
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks, length);
+  } finally {
+    request.setTimeout(0);
+  }
+}
+
+const nativeScreenshotRoutes = new Map([
+  ["/process-riven", ["RIVEN", processRivenScreenshot]],
+  ["/process-refinement", ["REFINEMENT", processRefinementScreenshot]],
+  ["/process-reward", ["REWARD", (filePath) => processScreenshot(filePath, true, 1, false)]]
+]);
+
+async function processNativeRequest(request, response, [kind, recognize]) {
+  let temporaryPath = "";
+  let acquired = false;
+  try {
+    const jpeg = request.headers["content-type"] === "image/jpeg";
+    const data = jpeg ? null : JSON.parse((await readRequestBytes(request, 16384)).toString("utf8"));
+    let filePath = data?.path;
+    if (jpeg || data?.foreground === true) {
+      if (!captureAllowed()) {
+        if (jpeg) request.resume();
+        return sendJson(response, 503, { success: false, resourceLimited: true });
+      }
+      automaticCaptureActive = acquired = true;
+      if (jpeg) {
+        const size = Number(request.headers["content-length"]);
+        if (!Number.isSafeInteger(size) || size < 4 || size > maxFrameBytes) {
+          request.resume();
+          return sendJson(response, 413, { success: false, reason: "Invalid JPEG upload size." });
+        }
+        const frame = await readRequestBytes(request, size);
+        if (frame.length !== size || frame.readUInt16BE(0) !== 0xffd8 ||
+            frame.readUInt16BE(size - 2) !== 0xffd9) {
+          return sendJson(response, 400, { success: false, reason: "Invalid JPEG frame." });
+        }
+        temporaryPath = path.join(outputDirectory, "ocr-upload-" + randomUUID() + ".jpg");
+        fs.writeFileSync(temporaryPath, frame, { flag: "wx" });
+      } else {
+        const captured = await captureForegroundWarframe();
+        if (!captured.success || !captured.path) return sendJson(response, 200, captured);
+        temporaryPath = captured.path;
+      }
+      filePath = temporaryPath;
+    }
+    if (typeof filePath !== "string" || !fs.existsSync(filePath)) {
+      return sendJson(response, 400, { success: false, reason: "Screenshot path is invalid." });
+    }
+    audit(kind + "_NATIVE_PROCESS", jpeg ? "buffer" : temporaryPath ? "foreground" : "file");
+    const result = await recognize(filePath);
+    return sendJson(response, 200, result);
+  } catch (error) {
+    if (!response.destroyed && !response.headersSent) {
+      sendJson(response, 400, { success: false, reason: error.message });
+    }
+  } finally {
+    if (temporaryPath) {
+      try { fs.rmSync(temporaryPath, { force: true }); }
+      catch (error) { audit("OCR_UPLOAD_CLEANUP_FAILED", error.code); }
+    }
+    if (acquired) automaticCaptureActive = false;
+  }
+}
+
 const server = http.createServer((request, response) => {
   if (request.method === "OPTIONS") {
     audit("OPTIONS", request.headers.origin || "");
@@ -1262,6 +1352,10 @@ const server = http.createServer((request, response) => {
   }
   if (request.method === "GET" && request.url === "/health") {
     return sendJson(response, 200, { ready: !shuttingDown && modelAllowed, pid: process.pid, worker: paddleManager.status(), auxiliary: auxiliaryChildren.size });
+  }
+  if (request.method === "GET" && request.url === "/capture-permit") {
+    const ready = captureAllowed();
+    return sendJson(response, ready ? 200 : 503, { ready });
   }
   if (request.method === "GET" && request.url === "/latest-reward") {
     try {
@@ -1385,69 +1479,14 @@ const server = http.createServer((request, response) => {
       return sendJson(response, 200, result);
     });
   }
-  if (request.method === "POST" && request.url === "/process-riven") {
-    let body = "";
-    request.setEncoding("utf8");
-    request.on("data", (chunk) => { body += chunk; });
-    request.on("end", async () => {
-      try {
-        const data = JSON.parse(body);
-        if (!data.path || typeof data.path !== "string" || !fs.existsSync(data.path)) {
-          return sendJson(response, 400, { success: false, reason: "Riven screenshot path is invalid." });
-        }
-        audit("RIVEN_NATIVE_PROCESS", data.path);
-        return sendJson(response, 200, await processRivenScreenshot(data.path));
-      } catch (error) {
-        return sendJson(response, 400, { success: false, reason: error.message });
-      }
-    });
-    return;
-  }
-  if (request.method === "POST" && request.url === "/process-refinement") {
-    let body = "";
-    request.setEncoding("utf8");
-    request.on("data", (chunk) => { body += chunk; });
-    request.on("end", async () => {
-      try {
-        const data = JSON.parse(body);
-        if (!data.path || typeof data.path !== "string" || !fs.existsSync(data.path)) {
-          return sendJson(response, 400, { success: false, reason: "Refinement screenshot path is invalid." });
-        }
-        audit("REFINEMENT_NATIVE_PROCESS", data.path);
-        const result = await processRefinementScreenshot(data.path);
-        audit(result.success ? "REFINEMENT_NATIVE_MATCH" : "REFINEMENT_NATIVE_NO_MATCH", result.era || result.reason || "");
-        return sendJson(response, 200, result);
-      } catch (error) {
-        return sendJson(response, 400, { success: false, reason: error.message });
-      }
-    });
-    return;
+  if (request.method === "POST" && nativeScreenshotRoutes.has(request.url)) {
+    return processNativeRequest(request, response, nativeScreenshotRoutes.get(request.url));
   }
   if (request.method === "POST" && request.url === "/capture-reward") {
     return captureRewardWithPaddle().then((result) => {
       audit(result.success ? "REWARD_CAPTURE_DONE" : "REWARD_CAPTURE_NO_MATCH", result.reason || "");
       return sendJson(response, 200, result);
     });
-  }
-  if (request.method === "POST" && request.url === "/process-reward") {
-    let body = "";
-    request.setEncoding("utf8");
-    request.on("data", (chunk) => { body += chunk; });
-    request.on("end", async () => {
-      try {
-        const data = JSON.parse(body);
-        if (!data.path || typeof data.path !== "string" || !fs.existsSync(data.path)) {
-          return sendJson(response, 400, { success: false, reason: "Reward screenshot path is invalid." });
-        }
-        audit("REWARD_NATIVE_PROCESS", data.path);
-        const result = await processScreenshot(data.path, true, 1, false);
-        audit(result.success ? "REWARD_NATIVE_MATCH" : "REWARD_NATIVE_NO_MATCH", result.reason || "");
-        return sendJson(response, 200, result);
-      } catch (error) {
-        return sendJson(response, 400, { success: false, reason: error.message });
-      }
-    });
-    return;
   }
   if (request.method === "POST" && request.url === "/debug-process-reward") {
     let body = "";
@@ -1500,6 +1539,12 @@ const server = http.createServer((request, response) => {
 });
 
 server.listen(port, "127.0.0.1", () => {
+  // Only this listening service can own uploads. Remove leftovers after a forced exit.
+  for (const entry of fs.readdirSync(outputDirectory, { withFileTypes: true })) {
+    if (!entry.isFile() || !/^ocr-upload-[0-9a-f-]{36}\.jpg$/.test(entry.name)) continue;
+    try { fs.rmSync(path.join(outputDirectory, entry.name), { force: true }); }
+    catch (error) { audit("OCR_UPLOAD_CLEANUP_FAILED", error.code); }
+  }
   trimDiagnosticScreenshots();
   if (modelAllowed) paddleManager.ensureWorker().catch(error => audit("PADDLE_START_FAILED", error.message));
   process.stdout.write(`AlecaFrame Chinese relic OCR listening on ${port}\n`);

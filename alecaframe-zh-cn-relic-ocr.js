@@ -5,7 +5,6 @@
   window.__ALECAFRAME_ZH_CN_RELIC_OCR__ = true;
 
   const endpoint = "http://127.0.0.1:38147/process";
-  const captureEndpoint = "http://127.0.0.1:38147/capture";
   const refinementProcessEndpoint = "http://127.0.0.1:38147/process-refinement";
   const rewardProcessEndpoint = "http://127.0.0.1:38147/process-reward";
   const clearRewardEndpoint = "http://127.0.0.1:38147/clear-reward";
@@ -76,6 +75,9 @@
       return false;
     }
 
+    const capture = window.__ALECAFRAME_ZH_CN_OCR_CAPTURE__;
+    if (!capture?.start()) return false;
+
     try {
       const methodNames = [];
       let current = nativePlugin;
@@ -97,7 +99,6 @@
 
     const nativeSetNewRelicScreenshot = nativePlugin.SetNewRelicScreenshot;
     const originalTakeScreenshot = media.takeWindowsScreenshotByName;
-    const originalTakeGameScreenshot = media.takeScreenshot;
     let conversionInProgress = false;
     let activeNativeScreenshotRequest = 0;
     let lastSuccessfulConversionAt = 0;
@@ -106,7 +107,6 @@
     let lastRecommendationSubmittedAt = 0;
     let lastRefinementMatchAt = 0;
     let lastUnplannedRecommendationAuditAt = 0;
-    let refinementNativeCaptureInProgress = false;
 
     function hasCurrentPlannerResult() {
       try {
@@ -246,136 +246,30 @@
         .finally(() => { conversionInProgress = false; });
     }
 
-    // The reward window calls this explicit background bridge when it opens.
-    // Unlike the old /capture-reward route, it uses Overwolf's already-bound
-    // game-window capture API instead of spawning a PowerShell desktop grab.
-    // This has no connection to the relic-planner recommendation probe.
     let rewardNativeCaptureInProgress = false;
-    window.__ALECAFRAME_ZH_CN_CAPTURE_REWARD__ = function () {
-      if (rewardNativeCaptureInProgress) {
-        audit("REWARD_NATIVE_CAPTURE_SKIPPED", "already in progress");
-        return;
-      }
+    window.__ALECAFRAME_ZH_CN_CAPTURE_REWARD__ = async function () {
+      if (rewardNativeCaptureInProgress) return;
       rewardNativeCaptureInProgress = true;
-      const startedAt = Date.now();
-      audit("REWARD_NATIVE_CAPTURE_STARTED");
-      const processRewardCapture = (fileData, attempt) => {
-        if (!fileData || !fileData.success || !fileData.path) {
-          rewardNativeCaptureInProgress = false;
-          audit("REWARD_NATIVE_CAPTURE_FAILED", "attempt=" + attempt + " durationMs=" + (Date.now() - startedAt));
-          return;
+      try {
+        await fetch(clearRewardEndpoint, { method: "POST" }).catch(() => { });
+        try { localStorage.removeItem(rewardOverlayKey); } catch { }
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          const result = await capture.capture(rewardProcessEndpoint, false);
+          if (result?.success) {
+            publishRewardResult(result);
+            audit("REWARD_NATIVE_CAPTURE_MATCH", "attempt=" + attempt);
+            return;
+          }
+          if (result?.resourceLimited) break;
+          if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 350));
         }
-        audit("REWARD_NATIVE_CAPTURE_READY", "attempt=" + attempt + " " + fileData.path + " durationMs=" + (Date.now() - startedAt));
-        fetch(rewardProcessEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ path: fileData.path })
-        })
-          .then((response) => response.ok ? response.json() : Promise.reject(new Error("Reward OCR helper unavailable")))
-          .then((result) => {
-            if (result && result.success) {
-              publishRewardResult(result);
-              rewardNativeCaptureInProgress = false;
-              audit("REWARD_NATIVE_CAPTURE_MATCH", "attempt=" + attempt + " durationMs=" + (Date.now() - startedAt));
-              return;
-            }
-            if (attempt < 3) {
-              audit("REWARD_NATIVE_CAPTURE_RETRY", "attempt=" + attempt + " delayMs=350");
-              setTimeout(() => {
-                try {
-                  originalTakeGameScreenshot.call(media, (nextFileData) => processRewardCapture(nextFileData, attempt + 1));
-                } catch (error) {
-                  rewardNativeCaptureInProgress = false;
-                  audit("REWARD_NATIVE_CAPTURE_RETRY_FAILED", String(error && error.message || error));
-                }
-              }, 350);
-              return;
-            }
-            rewardNativeCaptureInProgress = false;
-            audit("REWARD_NATIVE_CAPTURE_NO_MATCH", "attempt=" + attempt + " durationMs=" + (Date.now() - startedAt));
-          })
-          .catch((error) => {
-            rewardNativeCaptureInProgress = false;
-            audit("REWARD_NATIVE_CAPTURE_OCR_FAILED", String(error && error.message || error));
-          });
-      };
-      fetch(clearRewardEndpoint, { method: "POST" }).catch(() => { }).finally(() => {
-        try { localStorage.removeItem(rewardOverlayKey); } catch (error) { }
-        if (typeof originalTakeGameScreenshot !== "function") {
-          rewardNativeCaptureInProgress = false;
-          audit("REWARD_NATIVE_GAME_CAPTURE_UNAVAILABLE", "durationMs=" + (Date.now() - startedAt));
-          return;
-        }
-        // Both window-title and window-handle capture return a stale D3D12
-        // surface here. takeScreenshot uses Overwolf's game-capture path,
-        // which is a separate current-frame API rather than a desktop grab.
-        // It is used only by reward OCR and never by the planner overlay.
-        audit("REWARD_NATIVE_GAME_CAPTURE_STARTED");
-        originalTakeGameScreenshot.call(media, (fileData) => processRewardCapture(fileData, 1));
-      });
+        audit("REWARD_NATIVE_CAPTURE_NO_MATCH");
+      } catch (error) {
+        audit("REWARD_NATIVE_CAPTURE_OCR_FAILED", String(error?.message || error));
+      } finally {
+        rewardNativeCaptureInProgress = false;
+      }
     };
-
-    // The relic-planner recommendation screen needs only the Chinese
-    // refinement title and era. Use Overwolf's current game frame rather
-    // than a PowerShell desktop capture; this remains fully separate from
-    // the post-opening reward-card bridge above.
-    function captureNativeRefinement(onComplete) {
-      if (refinementNativeCaptureInProgress) {
-        audit("REFINEMENT_NATIVE_CAPTURE_SKIPPED", "already in progress");
-        if (typeof onComplete === "function") onComplete();
-        return;
-      }
-      if (typeof originalTakeGameScreenshot !== "function") {
-        audit("REFINEMENT_NATIVE_CAPTURE_UNAVAILABLE");
-        if (typeof onComplete === "function") onComplete();
-        return;
-      }
-      refinementNativeCaptureInProgress = true;
-      const startedAt = Date.now();
-      audit("REFINEMENT_NATIVE_CAPTURE_STARTED");
-      originalTakeGameScreenshot.call(media, (fileData) => {
-        if (!fileData || !fileData.success || !fileData.path) {
-          refinementNativeCaptureInProgress = false;
-          audit("REFINEMENT_NATIVE_CAPTURE_FAILED", "durationMs=" + (Date.now() - startedAt));
-          if (typeof onComplete === "function") onComplete();
-          return;
-        }
-        fetch(refinementProcessEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ path: fileData.path })
-        })
-          .then((response) => response.ok ? response.json() : Promise.reject(new Error("Refinement OCR helper unavailable")))
-          .then((result) => {
-            if (result && result.success && result.screenKind === "refinement" && result.outputPath) {
-              lastSuccessfulConversionAt = Date.now();
-              lastRefinementMatchAt = lastSuccessfulConversionAt;
-              audit("REFINEMENT_NATIVE_CAPTURE_MATCH", "era=" + (result.era || "") + " durationMs=" + (Date.now() - startedAt));
-              submitConvertedRelicScreenshot(
-                result.outputPath,
-                null,
-                true,
-                result.era,
-                result.screenKind
-              );
-            } else {
-              if (lastRefinementMatchAt && Date.now() - lastRefinementMatchAt >= 3000) {
-                lastPublishedEra = "";
-                lastRecommendationOpenedAt = 0;
-                lastRecommendationSubmittedAt = 0;
-                lastRefinementMatchAt = 0;
-                audit("RECOMMENDATION_CONTEXT_CLEARED", "left refinement screen");
-              }
-              audit("REFINEMENT_NATIVE_CAPTURE_NO_MATCH", (result && result.reason || "No refinement UI landmarks.") + " durationMs=" + (Date.now() - startedAt));
-            }
-          })
-          .catch((error) => audit("REFINEMENT_NATIVE_CAPTURE_OCR_FAILED", String(error && error.message || error)))
-          .finally(() => {
-            refinementNativeCaptureInProgress = false;
-            if (typeof onComplete === "function") onComplete();
-          });
-      });
-    }
 
     // Preserve AlecaFrame's normal English workflow and transform only the
     // screenshots it already sends to the native relic recognizer.
@@ -422,72 +316,43 @@
       return;
     };
 
-    // Chinese UI cannot satisfy AlecaFrame's initial English-only detector in
-    // every build. The fallback is deliberately conservative: screenshotting
-    // and OCR are expensive system-wide operations, so native requests remain
-    // the normal path and probing is allowed only while Warframe is focused.
+    // Probe the refinement UI only for a current planner session.
     let lastProbeAt = 0;
-    let lastProbeStateAuditAt = 0;
     let wasWarframeFocused = false;
-    const probeIntervalMs = 2500;
-    function probeFocusedWarframe() {
-        if (conversionInProgress || Date.now() - lastSuccessfulConversionAt < 1200 ||
-           !window.overwolf.games ||
-          typeof window.overwolf.games.getRunningGameInfo !== "function" ||
-          typeof media.takeWindowsScreenshotByHandle !== "function") {
+    async function probeFocusedWarframe() {
+      if (!capture.isFocused()) {
+        wasWarframeFocused = false;
         return;
       }
-      window.overwolf.games.getRunningGameInfo((info) => {
-        const windowHandle = info && info.windowHandle;
-        const canCapture = info && info.success && info.isRunning && info.gameIsInFocus &&
-          windowHandle && windowHandle.value;
-        if (!canCapture) {
-          wasWarframeFocused = false;
-          if (Date.now() - lastProbeStateAuditAt >= 10000) {
-            lastProbeStateAuditAt = Date.now();
-            audit("PROBE_SKIPPED", JSON.stringify({
-              running: !!(info && info.isRunning),
-              focused: !!(info && info.gameIsInFocus),
-              handle: windowHandle && windowHandle.value || null
-            }));
-          }
-          return;
+      const now = Date.now();
+      if (conversionInProgress || now - lastSuccessfulConversionAt < 1200) return;
+      if (wasWarframeFocused && now - lastProbeAt < 2500) return;
+      wasWarframeFocused = true;
+      lastProbeAt = now;
+      if (!hasCurrentPlannerResult()) return;
+
+      conversionInProgress = true;
+      try {
+        const result = await capture.capture(refinementProcessEndpoint);
+        if (result?.success && result.screenKind === "refinement" && result.outputPath) {
+          lastSuccessfulConversionAt = Date.now();
+          lastRefinementMatchAt = lastSuccessfulConversionAt;
+          audit("REFINEMENT_NATIVE_CAPTURE_MATCH", "era=" + (result.era || ""));
+          submitConvertedRelicScreenshot(result.outputPath, null, true, result.era, result.screenKind);
+        } else if (lastRefinementMatchAt && Date.now() - lastRefinementMatchAt >= 3000) {
+          lastPublishedEra = "";
+          lastRecommendationOpenedAt = 0;
+          lastRecommendationSubmittedAt = 0;
+          lastRefinementMatchAt = 0;
+          audit("RECOMMENDATION_CONTEXT_CLEARED", "left refinement screen");
         }
-        const justReturnedToWarframe = !wasWarframeFocused;
-        wasWarframeFocused = true;
-        if (!justReturnedToWarframe && Date.now() - lastProbeAt < probeIntervalMs) return;
-        lastProbeAt = Date.now();
-        const probeStartedAt = lastProbeAt;
-        // This probe is exclusively for the independent refinement
-        // recommendation overlay. Reward cards always use the native request
-        // callback above; probing them risks publishing a frame from another
-        // mission after the reward choice has already closed.
-        const hasPlannerResult = hasCurrentPlannerResult();
-        if (!hasPlannerResult) return;
-        conversionInProgress = true;
-        captureNativeRefinement(() => {
-          conversionInProgress = false;
-          audit("REFINEMENT_NATIVE_PROBE_COMPLETE", "durationMs=" + (Date.now() - probeStartedAt));
-        });
-      });
-    }
-
-    // A focus transition bypasses the regular probe throttle above, so this
-    // short timer adds at most 400ms after returning from the planner without
-    // increasing steady-state screenshot frequency.
-    setInterval(probeFocusedWarframe, 400);
-
-    // Record the API and the running game state once at startup for diagnostics.
-    try {
-      audit("MEDIA_API", Object.keys(media).sort().join(","));
-      if (window.overwolf.games && typeof window.overwolf.games.getRunningGameInfo === "function") {
-        window.overwolf.games.getRunningGameInfo((info) => {
-          audit("RUNNING_GAME", JSON.stringify(info || {}));
-        });
+      } catch (error) {
+        audit("REFINEMENT_NATIVE_CAPTURE_OCR_FAILED", String(error?.message || error));
+      } finally {
+        conversionInProgress = false;
       }
-    } catch (error) {
-      audit("DIAGNOSTIC_FAILED", String(error && error.message || error));
     }
+    setInterval(probeFocusedWarframe, 400);
 
     bridgeInstalled = true;
     audit("BRIDGE_INSTALLED");

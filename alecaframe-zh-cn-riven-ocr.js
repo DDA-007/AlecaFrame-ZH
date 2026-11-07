@@ -559,65 +559,36 @@
     // No game polling or screenshots should run during native initialization.
     if (window.ready !== true || window.initializationSuccessful !== true ||
         window.initializingInProgress !== false) return false;
-    const media = window.overwolf && window.overwolf.media;
-    const games = window.overwolf && window.overwolf.games;
-    if (!media || typeof media.takeScreenshot !== "function" || !games ||
-        typeof games.getRunningGameInfo !== "function") return false;
+    const capture = window.__ALECAFRAME_ZH_CN_OCR_CAPTURE__;
+    if (!capture?.start()) return false;
 
     function probe() {
-      const now = Date.now();
       if (captureInProgress) return;
-      games.getRunningGameInfo(function (info) {
-        if (!info || !info.success || !info.isRunning || !info.gameIsInFocus) {
-          wasGameFocused = false;
-          clearIfInactive(Date.now());
-          return;
-        }
-        // Returning from another foreground window used to retain the 12 s
-        // idle interval.  Capture once immediately after Warframe regains
-        // focus, then return to the existing 1.6 s active cadence.  This is a
-        // single native screenshot on focus return, not a higher background
-        // polling rate.
-        const resumedFromOtherWindow = !wasGameFocused;
-        wasGameFocused = true;
-        if (resumedFromOtherWindow) focusProbeUntil = now + focusProbeWindowMs;
-        const hasWarmCandidate = lastCandidateAt && now - lastCandidateAt < inactiveClearMs;
-        const hasPublishedMatch = lastMatchAt && now - lastMatchAt < inactiveClearMs;
-        const inFocusProbeWindow = now < focusProbeUntil;
-        const interval = hasPublishedMatch ? activeProbeIntervalMs : (hasWarmCandidate || inFocusProbeWindow) ? warmupProbeIntervalMs : idleProbeIntervalMs;
-        if (!resumedFromOtherWindow && now - lastCaptureAt < interval) return;
-        if (resumedFromOtherWindow) {
-          lastCaptureAt = 0;
-          audit("RIVEN_FOCUS_RESUMED", "immediate-native-probe; warm-window-ms=" + focusProbeWindowMs);
-        }
-        captureInProgress = true;
-        lastCaptureAt = Date.now();
-        media.takeScreenshot(function (fileData) {
-          if (!fileData || !fileData.success || !fileData.path) {
-            captureInProgress = false;
-            audit("RIVEN_NATIVE_CAPTURE_FAILED", "no screenshot path");
-            return;
-          }
-          fetch(processEndpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ path: fileData.path })
-          })
-            .then(function (response) { return response.ok ? response.json() : null; })
-            .then(function (result) {
-              if (!publish(result)) clearIfInactive(Date.now());
-            })
-            .catch(function (error) {
-              audit("RIVEN_NATIVE_CAPTURE_OCR_FAILED", String(error && error.message || error));
-              clearIfInactive(Date.now());
-            })
-            .finally(function () { captureInProgress = false; });
-        });
-      });
+      const now = Date.now();
+      if (!capture.isFocused()) {
+        wasGameFocused = false;
+        clearIfInactive(now);
+        return;
+      }
+      const resumedFromOtherWindow = !wasGameFocused;
+      wasGameFocused = true;
+      if (resumedFromOtherWindow) focusProbeUntil = now + focusProbeWindowMs;
+      const hasWarmCandidate = lastCandidateAt && now - lastCandidateAt < inactiveClearMs;
+      const hasPublishedMatch = lastMatchAt && now - lastMatchAt < inactiveClearMs;
+      const inFocusProbeWindow = now < focusProbeUntil;
+      const interval = hasPublishedMatch ? activeProbeIntervalMs :
+        (hasWarmCandidate || inFocusProbeWindow) ? warmupProbeIntervalMs : idleProbeIntervalMs;
+      if (!resumedFromOtherWindow && now - lastCaptureAt < interval) return;
+      captureInProgress = true;
+      lastCaptureAt = now;
+      capture.capture(processEndpoint)
+        .then(result => {
+          if (!publish(result)) clearIfInactive(Date.now());
+        })
+        .catch(error => audit("RIVEN_CAPTURE_OCR_FAILED", String(error?.message || error)))
+        .finally(() => { captureInProgress = false; });
     }
 
-    // This is a low-frequency, independent probe. It does not intercept the
-    // native relic screenshot path and does not reuse relic/reward state.
     setInterval(probe, 450);
     installed = true;
     audit("RIVEN_BRIDGE_INSTALLED", "idleProbeMs=" + idleProbeIntervalMs + " warmupProbeMs=" + warmupProbeIntervalMs + " activeProbeMs=" + activeProbeIntervalMs);
