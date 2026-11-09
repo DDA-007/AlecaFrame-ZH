@@ -625,12 +625,48 @@ function Wait-AlecaFrameInitialization {
 }
 
 function Get-AlecaFrameRenderer {
-    Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-        Where-Object {
-            $_.Name -eq "OverwolfBrowser.exe" -and
-            $_.CommandLine -match "AlecaFrame"
-        } |
-        Select-Object -First 1
+    param([switch]$All)
+
+    if (-not ('AlecaFrameBrowserArguments' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+public static class AlecaFrameBrowserArguments {
+    [DllImport("shell32.dll", CharSet=CharSet.Unicode, ExactSpelling=true)]
+    static extern IntPtr CommandLineToArgvW(string commandLine, out int count);
+    [DllImport("kernel32.dll")]
+    static extern IntPtr LocalFree(IntPtr memory);
+
+    public static bool IsRenderer(string commandLine, string appId) {
+        if (String.IsNullOrWhiteSpace(commandLine) || String.IsNullOrWhiteSpace(appId)) return false;
+        int count;
+        IntPtr arguments = CommandLineToArgvW(commandLine, out count);
+        if (arguments == IntPtr.Zero) return false;
+
+        try {
+            string processType = null;
+            string uid = null;
+            for (int i = 1; i < count; i++) {
+                string argument = Marshal.PtrToStringUni(Marshal.ReadIntPtr(arguments, i * IntPtr.Size));
+                if (argument == "--") break;
+                if (argument.StartsWith("--type=", StringComparison.OrdinalIgnoreCase)) processType = argument;
+                if (argument.StartsWith("--uid=", StringComparison.OrdinalIgnoreCase)) uid = argument;
+            }
+            return String.Equals(processType, "--type=renderer", StringComparison.OrdinalIgnoreCase) &&
+                String.Equals(uid, "--uid=" + appId, StringComparison.OrdinalIgnoreCase);
+        } finally {
+            LocalFree(arguments);
+        }
+    }
+}
+'@
+    }
+
+    $renderers = Get-CimInstance Win32_Process -Filter "Name = 'OverwolfBrowser.exe'" -ErrorAction SilentlyContinue |
+        Where-Object { [AlecaFrameBrowserArguments]::IsRenderer($_.CommandLine, $appId) }
+    if ($All) { return $renderers }
+    $renderers | Select-Object -First 1
 }
 
 function Get-AlecaFrameStartupVersionState {
@@ -891,11 +927,7 @@ try {
             Write-LauncherLog "Chinese scripts applied to AlecaFrame $($versionDirectory.Name)"
 
             # Reload only AlecaFrame, keeping Overwolf and the session flags alive.
-            Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-                Where-Object {
-                    $_.Name -eq "OverwolfBrowser.exe" -and
-                    $_.CommandLine -match "AlecaFrame"
-                } |
+            Get-AlecaFrameRenderer -All |
                 ForEach-Object { Stop-Process -Id $_.ProcessId -ErrorAction SilentlyContinue }
             Start-Sleep -Seconds 3
             Assert-AlecaFrameSelectedVersion -Version $versionDirectory.Name -StartedAt $overwolfStartedAt
